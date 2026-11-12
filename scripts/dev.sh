@@ -10,6 +10,10 @@ BACKEND_DIR="$ROOT_DIR/backend"
 FRONTEND_DIR="$ROOT_DIR/frontend"
 ANDROID_DIR="$ROOT_DIR/android-app"
 EDITOR_DIR="$ROOT_DIR/packages/docx-editor"
+EDITOR_CORE_DIR="$EDITOR_DIR/packages/core"
+EDITOR_REACT_DIR="$EDITOR_DIR/packages/react"
+EDITOR_CORE_OUTPUT="$EDITOR_CORE_DIR/dist/core.js"
+EDITOR_REACT_OUTPUT="$EDITOR_REACT_DIR/dist/index.js"
 EDITOR_CSS="$EDITOR_DIR/packages/react/dist/styles.css"
 RUNTIME_DIR="$ROOT_DIR/.local/vakilsuite-dev"
 PID_FILE="$RUNTIME_DIR/pids"
@@ -127,26 +131,30 @@ rm -f "$PID_FILE"
 mkdir -p "$LOG_DIR"
 
 editor_needs_build() {
-  [[ ! -s "$EDITOR_CSS" ]] && return 0
-  find \
-    "$EDITOR_DIR/package.json" \
-    "$EDITOR_DIR/pnpm-lock.yaml" \
-    "$EDITOR_DIR/tailwind.config.lib.js" \
-    "$EDITOR_DIR/packages/core/package.json" \
-    "$EDITOR_DIR/packages/core/src" \
-    "$EDITOR_DIR/packages/react/package.json" \
-    "$EDITOR_DIR/packages/react/src" \
-    -newer "$EDITOR_CSS" -print -quit | grep -q .
+  local output="$1"
+  shift
+  [[ ! -s "$output" ]] && return 0
+  find "$@" -type f -newer "$output" -print -quit | grep -q .
 }
 
-if [[ ! -d "$EDITOR_DIR/node_modules" ]]; then
-  log "Installing shared Word editor dependencies"
-  (cd "$EDITOR_DIR" && pnpm install --frozen-lockfile)
+log "Synchronizing shared Word editor dependencies"
+(cd "$EDITOR_DIR" && CI=true pnpm install --frozen-lockfile)
+if editor_needs_build "$EDITOR_CORE_OUTPUT" \
+  "$EDITOR_DIR/package.json" \
+  "$EDITOR_DIR/pnpm-lock.yaml" \
+  "$EDITOR_CORE_DIR/package.json" \
+  "$EDITOR_CORE_DIR/src"; then
+  log "Building shared Word editor core"
+  (cd "$EDITOR_DIR" && NODE_OPTIONS="${NODE_OPTIONS:-} --max-old-space-size=4096" pnpm --filter @eigenpal/docx-core run build)
 fi
-if editor_needs_build; then
-  log "Building shared Word editor"
-  (cd "$EDITOR_DIR" && pnpm --filter @eigenpal/docx-core run build)
-  (cd "$EDITOR_DIR" && pnpm --filter @casualoffice/docs run build)
+if [[ ! -s "$EDITOR_CSS" ]] || editor_needs_build "$EDITOR_REACT_OUTPUT" \
+  "$EDITOR_DIR/package.json" \
+  "$EDITOR_DIR/pnpm-lock.yaml" \
+  "$EDITOR_DIR/tailwind.config.lib.js" \
+  "$EDITOR_REACT_DIR/package.json" \
+  "$EDITOR_REACT_DIR/src"; then
+  log "Building shared Word editor UI"
+  (cd "$EDITOR_DIR" && NODE_OPTIONS="${NODE_OPTIONS:-} --max-old-space-size=4096" pnpm --filter @casualoffice/docs run build)
 fi
 
 log "Starting PostgreSQL and Redis"
@@ -156,13 +164,11 @@ if [[ ! -x "$BACKEND_DIR/.venv/bin/python" ]]; then
   log "Installing backend dependencies"
   (cd "$BACKEND_DIR" && uv sync --locked)
 fi
-if [[ ! -d "$FRONTEND_DIR/node_modules" ]]; then
-  log "Installing frontend dependencies"
-  (cd "$FRONTEND_DIR" && pnpm install --frozen-lockfile)
-fi
-if [[ "$START_ANDROID" == true && ! -d "$ANDROID_DIR/node_modules" ]]; then
-  log "Installing Android dependencies"
-  (cd "$ANDROID_DIR" && pnpm install --frozen-lockfile)
+log "Synchronizing frontend dependencies"
+(cd "$FRONTEND_DIR" && CI=true pnpm install --frozen-lockfile)
+if [[ "$START_ANDROID" == true ]]; then
+  log "Synchronizing Android dependencies"
+  (cd "$ANDROID_DIR" && CI=true pnpm install --frozen-lockfile)
 fi
 
 log "Applying database migrations"
@@ -173,6 +179,7 @@ start_process() {
   local working_directory="$2"
   shift 2
   # setsid lets Ctrl+C and `stop` terminate reload/worker child processes together.
+  : > "$LOG_DIR/$name.log"
   (cd "$working_directory" && exec setsid "$@") >> "$LOG_DIR/$name.log" 2>&1 &
   local pid=$!
   printf '%s=%s\n' "$name" "$pid" >> "$PID_FILE"
@@ -181,9 +188,9 @@ start_process() {
 start_process backend "$BACKEND_DIR" uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 start_process worker "$BACKEND_DIR" uv run celery -A app.worker.celery_app:celery_app worker --loglevel=info
 start_process beat "$BACKEND_DIR" uv run celery -A app.worker.celery_app:celery_app beat --loglevel=info --schedule=/tmp/vakilsuite-celerybeat
-start_process frontend "$FRONTEND_DIR" pnpm dev
+start_process frontend "$FRONTEND_DIR" ./node_modules/.bin/next dev --webpack
 if [[ "$START_ANDROID" == true ]]; then
-  start_process metro "$ANDROID_DIR" pnpm start:usb
+  start_process metro "$ANDROID_DIR" ./node_modules/.bin/expo start --dev-client --localhost -c
 fi
 
 # Surface a startup failure immediately instead of leaving an apparently healthy
