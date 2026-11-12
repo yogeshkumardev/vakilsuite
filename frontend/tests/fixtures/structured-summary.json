@@ -1,0 +1,788 @@
+{
+  "payload": {
+    "schema_version": "case-summary-v2",
+    "output_language": "en-IN",
+    "sections": {
+      "case_overview": {
+        "case_title": {
+          "availability": "not_available",
+          "findings": []
+        },
+        "case_numbers": {
+          "availability": "not_available",
+          "findings": []
+        },
+        "court_and_bench": {
+          "availability": "not_available",
+          "findings": []
+        },
+        "petitioner_applicant_accused": {
+          "availability": "not_available",
+          "findings": []
+        },
+        "complainant_opposite_party": {
+          "availability": "not_available",
+          "findings": []
+        },
+        "fir_number_and_police_station": {
+          "availability": "not_available",
+          "findings": []
+        },
+        "applicable_provisions": {
+          "availability": "not_available",
+          "findings": []
+        },
+        "current_case_stage": {
+          "availability": "not_available",
+          "findings": []
+        },
+        "relief_sought": {
+          "availability": "not_available",
+          "findings": []
+        }
+      },
+      "executive_summary": {
+        "sentences": [
+          {
+            "id": "fact_0001",
+            "text": "record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record",
+            "status": "documented",
+            "citations": [
+              {
+                "document_id": "original-1",
+                "file_version_id": "version-1",
+                "source_revision_id": "revision-1",
+                "page_number": 1,
+                "source_paths": [
+                  "page:1"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "chronological_timeline": {
+        "incident_factual": [
+          {
+            "event_id": "fir",
+            "date_time": {
+              "source_wording": "1 January 2025",
+              "normalized_date": "2025-01-01",
+              "time": null,
+              "precision": "exact"
+            },
+            "event": {
+              "id": "fact_0002",
+              "text": "FIR registration is recorded.",
+              "status": "documented",
+              "citations": [
+                {
+                  "document_id": "original-1",
+                  "file_version_id": "version-1",
+                  "source_revision_id": "revision-1",
+                  "page_number": 1,
+                  "source_paths": [
+                    "page:1"
+                  ]
+                }
+              ]
+            },
+            "persons_involved": {
+              "availability": "not_available",
+              "findings": []
+            },
+            "event_status": "documented",
+            "legal_significance": {
+              "text": "Examine procedural chronology.",
+              "basis_fact_ids": [
+                "fact_0002"
+              ],
+              "verification": "requires_verification"
+            },
+            "conflict_id": null
+          }
+        ],
+        "procedural_court": []
+      },
+      "parties_and_roles": {
+        "parties": []
+      },
+      "prosecution_version": {
+        "availability": "available",
+        "findings": [
+          {
+            "id": "fact_0003",
+            "text": "An assault is alleged.",
+            "status": "alleged",
+            "citations": [
+              {
+                "document_id": "original-1",
+                "file_version_id": "version-1",
+                "source_revision_id": "revision-1",
+                "page_number": 1,
+                "source_paths": [
+                  "page:1"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "applicant_version": {
+        "availability": "not_available",
+        "findings": []
+      },
+      "witness_analysis": {
+        "witnesses": []
+      },
+      "evidence_analysis": {
+        "materials": {
+          "availability": "not_available",
+          "findings": []
+        },
+        "observations": [],
+        "allegation_evidence_defence_matrix": [
+          {
+            "allegation_fact_id": "fact_0003",
+            "supporting_fact_ids": [],
+            "defence_fact_ids": [],
+            "defence_observation": {
+              "text": "Check identification against the record.",
+              "basis_fact_ids": [
+                "fact_0003"
+              ],
+              "verification": "requires_verification"
+            },
+            "research_required": "Obtain witness statements."
+          }
+        ]
+      },
+      "contradictions": {
+        "conflicts": []
+      },
+      "legal_provisions": {
+        "record_mentioned": {
+          "availability": "not_available",
+          "findings": []
+        },
+        "ai_suggested": []
+      },
+      "legal_issues": {
+        "observations": []
+      },
+      "defence_grounds": {
+        "observations": []
+      },
+      "prosecution_arguments": {
+        "observations": []
+      },
+      "missing_information": {
+        "items": [
+          {
+            "description": "Witness statements not supplied.",
+            "related_fact_ids": [
+              "fact_0003"
+            ],
+            "availability": "not_supplied"
+          }
+        ]
+      },
+      "advocate_actions": {
+        "actions": [
+          {
+            "category": "obtain_documents",
+            "instruction": "Obtain statements.",
+            "related_fact_ids": [
+              "fact_0003"
+            ]
+          }
+        ]
+      }
+    },
+    "uncertainties": []
+  },
+  "presentation": {
+    "schema_version": "case-summary-v2",
+    "executive_word_count": 160,
+    "sections": [
+      {
+        "key": "case_overview",
+        "number": 1,
+        "title": "Case Overview",
+        "blocks": [
+          {
+            "kind": "availability",
+            "title": "Case Title",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not Available",
+                "sources": []
+              }
+            ]
+          },
+          {
+            "kind": "availability",
+            "title": "Case Numbers",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not Available",
+                "sources": []
+              }
+            ]
+          },
+          {
+            "kind": "availability",
+            "title": "Court And Bench",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not Available",
+                "sources": []
+              }
+            ]
+          },
+          {
+            "kind": "availability",
+            "title": "Petitioner Applicant Accused",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not Available",
+                "sources": []
+              }
+            ]
+          },
+          {
+            "kind": "availability",
+            "title": "Complainant Opposite Party",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not Available",
+                "sources": []
+              }
+            ]
+          },
+          {
+            "kind": "availability",
+            "title": "Fir Number And Police Station",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not Available",
+                "sources": []
+              }
+            ]
+          },
+          {
+            "kind": "availability",
+            "title": "Applicable Provisions",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not Available",
+                "sources": []
+              }
+            ]
+          },
+          {
+            "kind": "availability",
+            "title": "Current Case Stage",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not Available",
+                "sources": []
+              }
+            ]
+          },
+          {
+            "kind": "availability",
+            "title": "Relief Sought",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not Available",
+                "sources": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "executive_summary",
+        "number": 2,
+        "title": "Executive Summary",
+        "blocks": [
+          {
+            "kind": "fact",
+            "title": "Sentences",
+            "cells": [
+              {
+                "label": "Documented",
+                "text": "record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record",
+                "sources": [
+                  {
+                    "finding_id": "fact_0001",
+                    "citation_index": 0,
+                    "document_id": "original-1",
+                    "page_number": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "chronological_timeline",
+        "number": 3,
+        "title": "Chronological Timeline of Events",
+        "blocks": [
+          {
+            "kind": "timeline",
+            "title": "Incident Factual",
+            "cells": [
+              {
+                "label": "Date / Time",
+                "text": "1 January 2025 · exact",
+                "sources": [
+                  {
+                    "finding_id": "fact_0002",
+                    "citation_index": 0,
+                    "document_id": "original-1",
+                    "page_number": 1
+                  }
+                ]
+              },
+              {
+                "label": "Event description",
+                "text": "FIR registration is recorded.",
+                "sources": [
+                  {
+                    "finding_id": "fact_0002",
+                    "citation_index": 0,
+                    "document_id": "original-1",
+                    "page_number": 1
+                  }
+                ]
+              },
+              {
+                "label": "Person involved",
+                "text": "Not available",
+                "sources": []
+              },
+              {
+                "label": "Source document",
+                "text": "original-1",
+                "sources": [
+                  {
+                    "finding_id": "fact_0002",
+                    "citation_index": 0,
+                    "document_id": "original-1",
+                    "page_number": 1
+                  }
+                ]
+              },
+              {
+                "label": "Page number",
+                "text": "1",
+                "sources": [
+                  {
+                    "finding_id": "fact_0002",
+                    "citation_index": 0,
+                    "document_id": "original-1",
+                    "page_number": 1
+                  }
+                ]
+              },
+              {
+                "label": "Event status",
+                "text": "Documented",
+                "sources": []
+              },
+              {
+                "label": "Legal significance · AI analysis",
+                "text": "Examine procedural chronology.",
+                "sources": [
+                  {
+                    "finding_id": "fact_0002",
+                    "citation_index": 0,
+                    "document_id": "original-1",
+                    "page_number": 1
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "availability",
+            "title": "Procedural Court",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not available",
+                "sources": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "parties_and_roles",
+        "number": 4,
+        "title": "Parties & Their Roles",
+        "blocks": [
+          {
+            "kind": "availability",
+            "title": "Parties",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not available",
+                "sources": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "prosecution_version",
+        "number": 5,
+        "title": "Prosecution / Complainant Version",
+        "blocks": [
+          {
+            "kind": "fact",
+            "title": "Prosecution / Complainant Version",
+            "cells": [
+              {
+                "label": "Alleged",
+                "text": "An assault is alleged.",
+                "sources": [
+                  {
+                    "finding_id": "fact_0003",
+                    "citation_index": 0,
+                    "document_id": "original-1",
+                    "page_number": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "applicant_version",
+        "number": 6,
+        "title": "Applicant / Accused Version",
+        "blocks": [
+          {
+            "kind": "availability",
+            "title": "Applicant / Accused Version",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not Available",
+                "sources": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "witness_analysis",
+        "number": 7,
+        "title": "Witness Analysis",
+        "blocks": [
+          {
+            "kind": "availability",
+            "title": "Witnesses",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not available",
+                "sources": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "evidence_analysis",
+        "number": 8,
+        "title": "Evidence Analysis",
+        "blocks": [
+          {
+            "kind": "availability",
+            "title": "Materials",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not Available",
+                "sources": []
+              }
+            ]
+          },
+          {
+            "kind": "availability",
+            "title": "Observations",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not available",
+                "sources": []
+              }
+            ]
+          },
+          {
+            "kind": "matrix",
+            "title": "Allegation vs Evidence vs Defence",
+            "cells": [
+              {
+                "label": "Prosecution allegation",
+                "text": "An assault is alleged.",
+                "sources": [
+                  {
+                    "finding_id": "fact_0003",
+                    "citation_index": 0,
+                    "document_id": "original-1",
+                    "page_number": 1
+                  }
+                ]
+              },
+              {
+                "label": "Supporting material",
+                "text": "Not supplied in selected source set",
+                "sources": []
+              },
+              {
+                "label": "Actual defence account",
+                "text": "Not supplied in selected source set",
+                "sources": []
+              },
+              {
+                "label": "Defence observation · AI analysis",
+                "text": "Check identification against the record.",
+                "sources": [
+                  {
+                    "finding_id": "fact_0003",
+                    "citation_index": 0,
+                    "document_id": "original-1",
+                    "page_number": 1
+                  }
+                ]
+              },
+              {
+                "label": "Verification / research required",
+                "text": "Obtain witness statements.",
+                "sources": [
+                  {
+                    "finding_id": "fact_0003",
+                    "citation_index": 0,
+                    "document_id": "original-1",
+                    "page_number": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "contradictions",
+        "number": 9,
+        "title": "Contradictions & Inconsistencies",
+        "blocks": [
+          {
+            "kind": "availability",
+            "title": "Conflicts",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not available",
+                "sources": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "legal_provisions",
+        "number": 10,
+        "title": "Applicable Legal Provisions",
+        "blocks": [
+          {
+            "kind": "availability",
+            "title": "Record Mentioned",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not Available",
+                "sources": []
+              }
+            ]
+          },
+          {
+            "kind": "availability",
+            "title": "Ai Suggested",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not available",
+                "sources": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "legal_issues",
+        "number": 11,
+        "title": "Legal Issues for Consideration",
+        "blocks": [
+          {
+            "kind": "availability",
+            "title": "Observations",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not available",
+                "sources": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "defence_grounds",
+        "number": 12,
+        "title": "Potential Defence Grounds",
+        "blocks": [
+          {
+            "kind": "availability",
+            "title": "Observations",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not available",
+                "sources": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "prosecution_arguments",
+        "number": 13,
+        "title": "Prosecution's Possible Arguments",
+        "blocks": [
+          {
+            "kind": "availability",
+            "title": "Observations",
+            "cells": [
+              {
+                "label": "Availability",
+                "text": "Not available",
+                "sources": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "missing_information",
+        "number": 14,
+        "title": "Missing Information & Documents",
+        "blocks": [
+          {
+            "kind": "missing",
+            "title": "Not Supplied",
+            "cells": [
+              {
+                "label": "Items",
+                "text": "Witness statements not supplied.",
+                "sources": [
+                  {
+                    "finding_id": "fact_0003",
+                    "citation_index": 0,
+                    "document_id": "original-1",
+                    "page_number": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "advocate_actions",
+        "number": 15,
+        "title": "Advocate Action Points",
+        "blocks": [
+          {
+            "kind": "action",
+            "title": "Obtain Documents",
+            "cells": [
+              {
+                "label": "Actions",
+                "text": "Obtain statements.",
+                "sources": [
+                  {
+                    "finding_id": "fact_0003",
+                    "citation_index": 0,
+                    "document_id": "original-1",
+                    "page_number": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "selectable_facts": [
+      {
+        "id": "fact_0001",
+        "text": "record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record record",
+        "status": "documented",
+        "sources": [
+          {
+            "finding_id": "fact_0001",
+            "citation_index": 0,
+            "document_id": "original-1",
+            "page_number": 1
+          }
+        ]
+      },
+      {
+        "id": "fact_0002",
+        "text": "FIR registration is recorded.",
+        "status": "documented",
+        "sources": [
+          {
+            "finding_id": "fact_0002",
+            "citation_index": 0,
+            "document_id": "original-1",
+            "page_number": 1
+          }
+        ]
+      },
+      {
+        "id": "fact_0003",
+        "text": "An assault is alleged.",
+        "status": "alleged",
+        "sources": [
+          {
+            "finding_id": "fact_0003",
+            "citation_index": 0,
+            "document_id": "original-1",
+            "page_number": 1
+          }
+        ]
+      }
+    ],
+    "uncertainties": []
+  }
+}

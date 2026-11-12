@@ -1,0 +1,16 @@
+/* Presentation only: document margins in saved Lexical state stay unchanged. */
+@media screen {
+  .document-source-workspace .document-work-pane {
+    height: max(28rem, calc(100dvh - 14rem));
+  }
+  .document-source-workspace .editor-scroll-area { padding: .5rem; min-height: 0; }
+  .document-source-workspace .editor-page-wrapper { padding-top: 1.25rem; }
+  .document-source-workspace .editor-placeholder { top: 1.25rem; }
+  .document-source-workspace .editor-toolbar-ribbon { box-shadow: none; }
+  .document-source-workspace .editor-dictation-row > div { padding-top: .125rem; padding-bottom: .125rem; }
+}
+@media screen and (pointer: coarse) {
+  .document-source-workspace button,
+  .document-source-workspace a,
+  .document-source-workspace select { min-height: 44px; }
+}

@@ -1,0 +1,6 @@
+.auth-page h1,
+.auth-page h2 {
+  font-family: var(--font-sans);
+  letter-spacing: normal;
+  line-height: 1.25;
+}

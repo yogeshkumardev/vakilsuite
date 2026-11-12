@@ -1,0 +1,46 @@
+{
+  "samples": [
+    {
+      "name": "ordinary-hindi-quiet",
+      "category": "ordinary_hindi",
+      "audio": "audio/ordinary-hindi-quiet.m4a",
+      "expected": "यहाँ अपने non-sensitive sample का exact expected transcript लिखें।",
+      "critical_terms": []
+    },
+    {
+      "name": "legal-codemix-quiet",
+      "category": "legal_codemix",
+      "audio": "audio/legal-codemix-quiet.m4a",
+      "expected": "यहाँ Hindi-English legal sample का exact expected transcript लिखें।",
+      "critical_terms": ["bail application", "IPC"]
+    },
+    {
+      "name": "names-and-courts",
+      "category": "proper_nouns",
+      "audio": "audio/names-and-courts.m4a",
+      "expected": "यहाँ नाम, जिला, थाना और न्यायालय वाला exact transcript लिखें।",
+      "critical_terms": ["जिला", "थाना", "न्यायालय"]
+    },
+    {
+      "name": "numbers-and-sections",
+      "category": "numbers_sections",
+      "audio": "audio/numbers-and-sections.m4a",
+      "expected": "यहाँ तारीख, रकम, case number और धारा वाला exact transcript लिखें।",
+      "critical_terms": ["BNS", "BNSS"]
+    },
+    {
+      "name": "legal-codemix-noise",
+      "category": "moderate_noise",
+      "audio": "audio/legal-codemix-noise.m4a",
+      "expected": "यहाँ moderate background noise sample का exact transcript लिखें।",
+      "critical_terms": []
+    },
+    {
+      "name": "legal-codemix-fast",
+      "category": "fast_speech",
+      "audio": "audio/legal-codemix-fast.m4a",
+      "expected": "यहाँ fast speech sample का exact transcript लिखें।",
+      "critical_terms": []
+    }
+  ]
+}

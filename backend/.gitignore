@@ -1,0 +1,42 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+helpguide.md
+file_and_folder_structure.md
+.env
+secrets/
+*.secret.json
+
+private_drafts/
+
+# Local permitted benchmark inputs can contain client/legal data.
+sample_pdf_images/
+# Local dictation samples are transient and must never be committed.
+audio/
+# Tool caches
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.coverage
+
+# Database and Celery
+*.db
+*.sqlite3
+celerybeat-schedule
+celerybeat.pid
+# auth-flow.md
+# user-profile.md
+# user-stories.md
+# vakilsuite-project-plan.md
+user-profile.md
+user-stories.md
+vakilsuite-project-plan.md
+auth-flow.md
+

@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: "Inter", system-ui, sans-serif;
+    --ui-workspace: #f8fafc;
+    --ui-surface: #ffffff;
+    --ui-surface-subtle: #f8fafc;
+    --ui-foreground: #0f172a;
+    --ui-foreground-muted: #64748b;
+    --ui-border: #e2e8f0;
+    --ui-border-strong: #cbd5e1;
+    --ui-accent: #4f46e5;
+    --ui-accent-hover: #4338ca;
+    --ui-focus: #6366f1;
+    --ui-success: #059669;
+    --ui-warning: #d97706;
+    --ui-danger: #dc2626;
+    --ui-info: #2563eb;
+    --ui-page-standard: 90rem;
+    --ui-page-wide: 105rem;
+    --ui-page-form: 48rem;
+    --ui-radius-control: 0.5rem;
+    --ui-radius-surface: 0.5rem;
+    --ui-radius-dialog: 0.75rem;
+    --ui-shadow-surface: 0 1px 2px rgb(15 23 42 / 0.05);
+    --ui-shadow-overlay: 0 16px 40px rgb(15 23 42 / 0.18);
+    --ui-motion-fast: 150ms;
+    --color-surface: var(--ui-surface);
+    --shadow-card: var(--ui-shadow-surface);
+
+    /* ── Brand tokens ──────────────────────────────────────────────────── */
+    /* Primary: indigo — used for all main CTAs across the app             */
+    --btn-primary-bg:      #4f46e5; /* indigo-600  */
+    --btn-primary-hover:   #4338ca; /* indigo-700  */
+    --btn-primary-text:    #ffffff;
+
+    /* Secondary / Ghost */
+    --btn-secondary-bg:    #ffffff;
+    --btn-secondary-border:#e2e8f0; /* slate-200   */
+    --btn-secondary-text:  #374151; /* slate-700   */
+    --btn-secondary-hover: #f8fafc; /* slate-50    */
+
+    /* Danger */
+    --btn-danger-bg:       #dc2626; /* red-600     */
+    --btn-danger-hover:    #b91c1c; /* red-700     */
+
+    /* Success */
+    --btn-success-bg:      #059669; /* emerald-600 */
+    --btn-success-hover:   #047857; /* emerald-700 */
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--ui-workspace);
+    color: var(--ui-foreground);
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  ::selection {
+    background: #e0e7ff;
+    color: #1e1b4b;
+  }
+
+  /* Smooth scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+}

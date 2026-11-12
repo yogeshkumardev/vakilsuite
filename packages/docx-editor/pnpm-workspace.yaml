@@ -1,0 +1,16 @@
+packages:
+  - 'packages/*'
+  - 'examples/vite'
+
+onlyBuiltDependencies:
+  - esbuild
+  - leveldown
+  - onnxruntime-node
+  - protobufjs
+  - sharp
+allowBuilds:
+  esbuild: true
+  leveldown: true
+  onnxruntime-node: true
+  protobufjs: true
+  sharp: true

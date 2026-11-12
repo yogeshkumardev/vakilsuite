@@ -1,0 +1,17 @@
+"use client";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
+import { useState } from "react";
+import { legalResearchApi } from "@/lib/api/legal-research";
+
+export default function AuthorityReviewPage() {
+  const { id: caseId, authorityId } = useParams<{ id: string; authorityId: string }>();
+  const [start, setStart] = useState(0); const [end, setEnd] = useState(0); const [proposition, setProposition] = useState("");
+  const authority = useQuery({ queryKey: ["legal-authority", caseId, authorityId], queryFn: () => legalResearchApi.getAuthority(caseId, authorityId) });
+  const passage = useMutation({ mutationFn: () => legalResearchApi.createPassage(caseId, authorityId, { authority_version_id: authority.data!.current_version_id!, start_offset: start, end_offset: end }) });
+  const create = useMutation({ mutationFn: () => legalResearchApi.createProposition(caseId, { authority_version_id: passage.data!.authority_version_id, passage_id: passage.data!.id, text: proposition }) });
+  const decide = useMutation({ mutationFn: (action: "approved" | "rejected" | "changes_requested") => legalResearchApi.decideReview(caseId, create.data!.review_id, { action, expected_version: create.data!.review_version }) });
+  if (authority.isLoading) return <p>Loading retained authority evidence…</p>; if (authority.error || !authority.data) return <p role="alert">{authority.error?.message ?? "Authority unavailable"}</p>;
+  const text = authority.data.text ?? "";
+  return <main className="mx-auto max-w-4xl space-y-4"><h1 className="text-2xl font-semibold">Authority review</h1><p className="text-sm text-slate-600">Select exact character offsets from retained evidence. This page never re-fetches Indian Kanoon.</p><pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded border bg-slate-50 p-4 text-sm">{text}</pre><section className="grid gap-3 rounded border p-4 sm:grid-cols-2"><label>Start offset<input type="number" min="0" value={start} onChange={(e) => setStart(Number(e.target.value))} className="ml-2 border" /></label><label>End offset<input type="number" min="1" value={end} onChange={(e) => setEnd(Number(e.target.value))} className="ml-2 border" /></label><button disabled={!authority.data.current_version_id || end <= start || passage.isPending} onClick={() => passage.mutate()} className="rounded bg-indigo-600 px-3 py-2 text-white">Save exact passage</button></section>{passage.data ? <section className="space-y-3 rounded border p-4"><p className="text-sm">Selected: {passage.data.text}</p><textarea value={proposition} onChange={(e) => setProposition(e.target.value)} className="w-full border p-2" placeholder="Legal proposition supported by this passage" /><button disabled={proposition.trim().length < 10 || create.isPending} onClick={() => create.mutate()} className="rounded bg-indigo-600 px-3 py-2 text-white">Create proposition</button></section> : null}{create.data ? <section className="space-x-2 rounded border p-4"><p className="mb-2">Advocate decision required</p><button onClick={() => decide.mutate("approved")} className="rounded bg-emerald-700 px-3 py-2 text-white">Approve</button><button onClick={() => decide.mutate("changes_requested")} className="rounded bg-amber-600 px-3 py-2 text-white">Request changes</button><button onClick={() => decide.mutate("rejected")} className="rounded bg-red-700 px-3 py-2 text-white">Reject</button></section> : null}</main>;
+}
