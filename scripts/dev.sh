@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Start or stop the complete local VakilSuite development stack.
+# The shared DOCX editor is built before Next.js so a clean clone works too.
 # Usage: ./scripts/dev.sh [start|stop|status] [--android]
 
 set -Eeuo pipefail
@@ -8,6 +9,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BACKEND_DIR="$ROOT_DIR/backend"
 FRONTEND_DIR="$ROOT_DIR/frontend"
 ANDROID_DIR="$ROOT_DIR/android-app"
+EDITOR_DIR="$ROOT_DIR/packages/docx-editor"
+EDITOR_CSS="$EDITOR_DIR/packages/react/dist/styles.css"
 RUNTIME_DIR="$ROOT_DIR/.local/vakilsuite-dev"
 PID_FILE="$RUNTIME_DIR/pids"
 LOG_DIR="$RUNTIME_DIR/logs"
@@ -99,6 +102,7 @@ command -v uv >/dev/null || die "uv is required."
 command -v pnpm >/dev/null || die "pnpm is required."
 [[ -f "$BACKEND_DIR/.env" ]] || die "Missing backend/.env. Create it before starting the stack."
 [[ -f "$FRONTEND_DIR/.env" ]] || die "Missing frontend/.env. Create it before starting the stack."
+[[ -f "$EDITOR_DIR/package.json" ]] || die "Missing packages/docx-editor. Restore the shared Word editor before starting."
 
 if [[ -f "$PID_FILE" ]] && read_pids | awk '{print $2}' | xargs -r -n1 kill -0 2>/dev/null; then
   die "A local stack is already running. Use ./scripts/dev.sh status or ./scripts/dev.sh stop."
@@ -121,6 +125,29 @@ fi
 
 rm -f "$PID_FILE"
 mkdir -p "$LOG_DIR"
+
+editor_needs_build() {
+  [[ ! -s "$EDITOR_CSS" ]] && return 0
+  find \
+    "$EDITOR_DIR/package.json" \
+    "$EDITOR_DIR/pnpm-lock.yaml" \
+    "$EDITOR_DIR/tailwind.config.lib.js" \
+    "$EDITOR_DIR/packages/core/package.json" \
+    "$EDITOR_DIR/packages/core/src" \
+    "$EDITOR_DIR/packages/react/package.json" \
+    "$EDITOR_DIR/packages/react/src" \
+    -newer "$EDITOR_CSS" -print -quit | grep -q .
+}
+
+if [[ ! -d "$EDITOR_DIR/node_modules" ]]; then
+  log "Installing shared Word editor dependencies"
+  (cd "$EDITOR_DIR" && pnpm install --frozen-lockfile)
+fi
+if editor_needs_build; then
+  log "Building shared Word editor"
+  (cd "$EDITOR_DIR" && pnpm --filter @eigenpal/docx-core run build)
+  (cd "$EDITOR_DIR" && pnpm --filter @casualoffice/docs run build)
+fi
 
 log "Starting PostgreSQL and Redis"
 (cd "$BACKEND_DIR" && docker compose up -d)
