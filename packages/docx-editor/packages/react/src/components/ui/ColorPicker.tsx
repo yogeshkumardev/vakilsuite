@@ -346,14 +346,16 @@ function StandardColorRow({
   onSelect: (hex: string) => void;
 }) {
   const [hovered, setHovered] = useState<number | null>(null);
-  const { t } = useTranslation();
 
   return (
     <div style={{ ...S_GRID, gridTemplateColumns: `repeat(10, ${CELL_SIZE}px)` }}>
       {STANDARD_COLORS.map((c, i) => {
         const isHov = hovered === i;
         const isSel = isSelectedCell(selectedColor, c.hex, theme);
-        const displayName = t(c.nameKey);
+        // This grid only mounts while the colour dropdown is open. Keep its
+        // hook list independent of the surrounding locale-provider update
+        // that closes the dropdown after a colour is applied.
+        const displayName = c.name;
         return (
           <button
             key={c.hex}

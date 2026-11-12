@@ -21,6 +21,10 @@ LOG_DIR="$RUNTIME_DIR/logs"
 
 ACTION="start"
 START_ANDROID=false
+# Celery defaults to one prefork child per CPU. That is wasteful for a local
+# stack and was the main contributor to VmmemWSL consuming several GB of RAM.
+# Override when intentionally load-testing background work.
+CELERY_DEV_CONCURRENCY="${CELERY_DEV_CONCURRENCY:-2}"
 
 usage() {
   cat <<'EOF'
@@ -187,7 +191,7 @@ start_process() {
 }
 
 start_process backend "$BACKEND_DIR" uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-start_process worker "$BACKEND_DIR" uv run celery -A app.worker.celery_app:celery_app worker --loglevel=info
+start_process worker "$BACKEND_DIR" uv run celery -A app.worker.celery_app:celery_app worker --loglevel=info --concurrency="$CELERY_DEV_CONCURRENCY"
 start_process beat "$BACKEND_DIR" uv run celery -A app.worker.celery_app:celery_app beat --loglevel=info --schedule=/tmp/vakilsuite-celerybeat
 start_process frontend "$FRONTEND_DIR" ./node_modules/.bin/next dev --webpack
 if [[ "$START_ANDROID" == true ]]; then

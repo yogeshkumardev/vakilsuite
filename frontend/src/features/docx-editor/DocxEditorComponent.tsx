@@ -103,6 +103,10 @@ export default function DocxEditorComponent({
     sourcePageCount,
 }: DocxEditorProps) {
     const editorRef = useRef<DocxEditorRef | null>(null);
+    // `DocxEditorRef.exportDocx()` uses the editor's save pipeline, which in
+    // turn invokes its `onSave` prop. Keep that promise so the host Save button
+    // can await the same request instead of posting the same revision twice.
+    const editorSavePromiseRef = useRef<Promise<void> | null>(null);
     const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
     const [isDirty, setIsDirty] = useState(false);
 
@@ -184,16 +188,33 @@ export default function DocxEditorComponent({
         [handleDirtyChange, onSave, onSaveContent, onSaveStatus, sourcePageCount],
     );
 
+    const handleEditorSave = useCallback((buffer: ArrayBuffer) => {
+        const savePromise = handleSave(buffer);
+        editorSavePromiseRef.current = savePromise;
+        void savePromise.finally(() => {
+            if (editorSavePromiseRef.current === savePromise) {
+                editorSavePromiseRef.current = null;
+            }
+        });
+        return savePromise;
+    }, [handleSave]);
+
     const triggerManualSave = useCallback(async () => {
         if (!editorRef.current || readOnly) return;
         try {
+            editorSavePromiseRef.current = null;
             const buffer = await editorRef.current.exportDocx();
-            if (buffer) await handleSave(buffer);
+            // exportDocx() deliberately runs the editor's onSave callback.
+            // Do not call handleSave(buffer) here: doing both created a 200
+            // followed by a stale-version 409 for one user click.
+            if (buffer && editorSavePromiseRef.current) {
+                await editorSavePromiseRef.current;
+            }
         } catch (err) {
             console.error("[DocxEditorComponent] Manual save error:", err);
             setSaveStatus("error");
         }
-    }, [handleSave, readOnly]);
+    }, [readOnly]);
 
     const handlePrint = useCallback(() => {
         editorRef.current ? editorRef.current.print() : window.print();
@@ -324,7 +345,7 @@ export default function DocxEditorComponent({
                     showStatusBar={false}
                     showZoomControl={false}
                     showRuler={false}
-                    onSave={handleSave}
+                    onSave={handleEditorSave}
                     onDirtyChange={handleDirtyChange}
                     onReady={(_api) => setIsDocxLoading(false)}
                     onError={(err) => console.error("[CasualDocxEditor] Error:", err)}
