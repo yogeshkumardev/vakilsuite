@@ -156,6 +156,7 @@ if [[ ! -s "$EDITOR_CSS" ]] || editor_needs_build "$EDITOR_REACT_OUTPUT" \
   log "Building shared Word editor UI"
   (cd "$EDITOR_DIR" && NODE_OPTIONS="${NODE_OPTIONS:-} --max-old-space-size=4096" pnpm --filter @casualoffice/docs run build)
 fi
+node "$ROOT_DIR/scripts/prepare-docx-editor-wasm.mjs"
 
 log "Starting PostgreSQL and Redis"
 (cd "$BACKEND_DIR" && docker compose up -d)

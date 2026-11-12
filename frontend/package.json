@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prepare:docx-editor-wasm": "node ../scripts/prepare-docx-editor-wasm.mjs",
+    "predev": "pnpm run prepare:docx-editor-wasm",
     "dev": "next dev --webpack",
     "dev:android": "next dev --webpack --hostname 0.0.0.0",
+    "prebuild": "pnpm run prepare:docx-editor-wasm",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
