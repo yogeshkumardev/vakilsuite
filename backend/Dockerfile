@@ -5,7 +5,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     UV_LINK_MODE=copy \
     DEBIAN_FRONTEND=noninteractive
 
-WORKDIR /app
+# This image is intentionally built from the repository root:
+#   docker build -f backend/Dockerfile .
+# Court blueprints live beside `backend/`, so a backend-only build context
+# would publish an API that cannot resolve a court draft at runtime.
+WORKDIR /app/backend
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -20,10 +24,11 @@ RUN pip install --no-cache-dir uv
 
 RUN useradd --create-home appuser
 
-COPY pyproject.toml uv.lock ./
+COPY backend/pyproject.toml backend/uv.lock ./
 RUN uv sync --locked --no-dev
 
-COPY --chown=appuser:appuser . .
+COPY --chown=appuser:appuser backend/ ./
+COPY --chown=appuser:appuser courts/ /app/courts/
 USER appuser
 
 EXPOSE 8000

@@ -1,0 +1,30 @@
+# Keep the remote Docker build context small.  Docker transfers the whole context
+# before COPY is evaluated, so local secrets and reference material must be excluded.
+.git
+.agents
+.aws
+.codex
+.env
+.env.*
+**/.env
+**/.env.*
+node_modules
+**/node_modules
+.next
+**/.next
+.venv
+**/.venv
+dist
+**/dist
+build
+**/build
+__pycache__
+**/__pycache__
+.pytest_cache
+**/.pytest_cache
+.mypy_cache
+**/.mypy_cache
+raw_drafts
+court-sources
+LegalDraft AI — Project Plan v2.md
+sc_and_hc_data.md

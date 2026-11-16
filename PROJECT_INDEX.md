@@ -24,6 +24,12 @@ shared Word editor are tracked from the repository root. Run status/diff from th
 The root ignore policy excludes local secrets, generated dependencies, build output and
 device artifacts; do not force-add them.
 
+Test deployment is defined by [`render.yaml`](render.yaml): one API, one Celery worker,
+one Celery beat service, Postgres and Key Value. The Vercel project root is `frontend/`;
+its config builds the linked browser DOCX editor. Follow
+[`docs/deploy-vercel-render.md`](docs/deploy-vercel-render.md) for secrets, CORS, R2 and
+acceptance checks. Do not treat a Vercel preview URL as an approved API origin.
+
 ## Cross-app task routing
 
 Backend paths below are under `app/features/`; web paths under `src/`.

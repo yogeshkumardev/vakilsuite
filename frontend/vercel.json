@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "installCommand": "cd ../packages/docx-editor && NODE_OPTIONS=--max-old-space-size=4096 pnpm install --frozen-lockfile && NODE_OPTIONS=--max-old-space-size=4096 pnpm --filter '@eigenpal/docx-core' run build && NODE_OPTIONS=--max-old-space-size=4096 pnpm --filter '@casualoffice/docs' run build && cd ../../frontend && pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm build"
+}

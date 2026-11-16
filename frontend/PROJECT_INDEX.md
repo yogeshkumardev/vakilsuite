@@ -53,10 +53,11 @@ an enabled route or a supported endpoint; inspect the feature gate and actual ro
   `content-conversion.ts` owns format conversion; `dictation/` owns editor dictation.
 - [features/editor-core/](src/features/editor-core/) holds compatibility types and page-layout
   helpers for historical editor payloads. It does not load Lexical at runtime.
-- [package.json](package.json) links `@casualoffice/docs` and `@eigenpal/docx-core` to
-  `../docx-editor/packages/react` and `../docx-editor/packages/core`. These directories were
-  absent and installed links broken at review. Restore the intended dependency source or
-  explicitly resolve packaging before claiming install/build reproducibility.
+- [package.json](package.json) links `@casualoffice/docs` and `@eigenpal/docx-core` to the
+  sibling `../packages/docx-editor/packages/` source. Vercel must enable **Include source
+  files outside of the Root Directory** and uses [vercel.json](vercel.json) to build the
+  editor from its pinned pnpm lockfile before Next.js. See
+  [`../docs/deploy-vercel-render.md`](../docs/deploy-vercel-render.md).
 - Dictation also uses `lib/api/dictation*.ts`, `lib/api/realtime-channel.ts` and the native
   bridge. Preserve bridge compatibility and recorder cleanup.
 

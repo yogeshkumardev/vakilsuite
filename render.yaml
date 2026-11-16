@@ -1,0 +1,135 @@
+services:
+  - type: keyvalue
+    name: vakilsuite-queue
+    region: singapore
+    maxmemoryPolicy: noeviction
+    ipAllowList: []
+
+  - type: web
+    name: vakilsuite-api
+    runtime: docker
+    region: singapore
+    dockerfilePath: backend/Dockerfile
+    dockerContext: .
+    dockerCommand: >-
+      sh -c 'uv run --no-sync alembic upgrade head && exec uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port $PORT'
+    healthCheckPath: /health
+    autoDeploy: false
+    envVars:
+      - fromGroup: vakilsuite-runtime
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vakilsuite-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: vakilsuite-queue
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: keyvalue
+          name: vakilsuite-queue
+          property: connectionString
+
+  - type: worker
+    name: vakilsuite-worker
+    runtime: docker
+    region: singapore
+    dockerfilePath: backend/Dockerfile
+    dockerContext: .
+    dockerCommand: >-
+      uv run --no-sync celery -A app.worker.celery_app:celery_app worker --loglevel=info --concurrency=1
+    autoDeploy: false
+    envVars:
+      - fromGroup: vakilsuite-runtime
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vakilsuite-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: vakilsuite-queue
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: keyvalue
+          name: vakilsuite-queue
+          property: connectionString
+
+  - type: worker
+    name: vakilsuite-beat
+    runtime: docker
+    region: singapore
+    dockerfilePath: backend/Dockerfile
+    dockerContext: .
+    dockerCommand: >-
+      uv run --no-sync celery -A app.worker.celery_app:celery_app beat --loglevel=info --schedule=/tmp/vakilsuite-celerybeat
+    autoDeploy: false
+    envVars:
+      - fromGroup: vakilsuite-runtime
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vakilsuite-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: vakilsuite-queue
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: keyvalue
+          name: vakilsuite-queue
+          property: connectionString
+
+databases:
+  - name: vakilsuite-db
+    region: singapore
+    databaseName: vakilsuite
+    user: vakilsuite
+
+envVarGroups:
+  - name: vakilsuite-runtime
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: AUTH_CODE_PEPPER
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: COOKIE_SAMESITE
+        value: lax
+      - key: COOKIE_DOMAIN
+        value: ""
+      - key: AUTH_PUBLIC_WEB_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: AUTH_EMAIL_FROM
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET_NAME
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        sync: false
+      - key: GEMINI_ALLOWED_MODELS
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false

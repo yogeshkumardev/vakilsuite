@@ -156,6 +156,23 @@ class Settings(BaseSettings):
             raise ValueError("CORS_ORIGINS cannot be empty")
         return value
 
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def normalize_async_database_url(cls, value: str) -> str:
+        """Accept managed-Postgres URLs while retaining one async runtime driver.
+
+        Render exposes its private database connection as `postgres://` or
+        `postgresql://`. SQLAlchemy's async engine needs the explicit asyncpg
+        dialect, whereas the Celery sync worker derives its psycopg2 URL later.
+        """
+        if not isinstance(value, str):
+            return value
+        if value.startswith("postgres://"):
+            return "postgresql+asyncpg://" + value.removeprefix("postgres://")
+        if value.startswith("postgresql://"):
+            return "postgresql+asyncpg://" + value.removeprefix("postgresql://")
+        return value
+
     @field_validator("DEBUG", mode="before")
     @classmethod
     def parse_debug(cls, value):

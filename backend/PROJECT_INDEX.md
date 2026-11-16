@@ -52,6 +52,13 @@ The workspace [dev script](../scripts/dev.sh) starts migrations, worker/beat, AP
 inspect it before use. When PostgreSQL/Redis are managed separately, use
 `../scripts/dev-backend.sh` for the API plus Celery worker; it does not run Docker or migrations.
 
+For Render, build the repository-root Docker context with `backend/Dockerfile`; this is
+necessary because deterministic court configuration is in `courts/` beside `backend/`.
+The Render Blueprint runs API, worker and beat separately; see
+[`../docs/deploy-vercel-render.md`](../docs/deploy-vercel-render.md). Production database
+URLs supplied by Render are normalized to the async API driver while Celery uses its sync
+driver.
+
 Run from `backend/` as appropriate:
 
 ```bash
