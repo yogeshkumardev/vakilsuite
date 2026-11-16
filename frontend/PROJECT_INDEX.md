@@ -33,9 +33,9 @@ Tests listed below are under `tests/`.
 | `/clients`, `/matters/new`, matter clients/fees | Dashboard routes, `lib/api/clients.ts`, `lib/api/cases.ts` | Route behavior and backend invariants |
 | Case document list/upload | `components/documents/`, `lib/api/upload-document.ts` | `upload-baseline.test.mjs`, `upload-workspace.smoke.mjs` |
 | Case document detail/source review | `features/documents/sources/`, `lib/api/original-sources.ts` | `source-editor-content.test.mjs`, `source-errors.test.mjs`, `document-source.smoke.mjs` |
-| Case summaries and run review | `features/summaries/`, `lib/api/summaries.ts` | `summary-errors.test.mjs`, `structured-summary.smoke.mjs`, `summary-editor.smoke.mjs` |
+| Case summary coverage, fact cards and run review | `features/summaries/`, `lib/api/summaries.ts` | Document fact-card drawer with cited originals and safe resume of durable pending deliveries; `summary-errors.test.mjs`, `structured-summary.smoke.mjs`, `summary-editor.smoke.mjs` |
 | Case working-document list/detail | `features/working-documents/`, `lib/api/working-documents.ts` | Backend revision tests and affected editor smoke tests |
-| Case drafts and `/drafts/new/[runId]` | `features/drafts/CaseDraftsWorkspace.tsx`, `lib/api/draft-generation.ts` | Feature gate and working-document caller |
+| Case drafts, `/drafts/new/[runId]`, and `/drafts/bail-483` | `features/drafts/CaseDraftsWorkspace.tsx`, `features/drafts/Bail483DraftWorkspace.tsx`, `lib/api/court-drafts.ts` | `/drafts/new/[runId]` binds that approved summary to the Allahabad physical Section 483 BNSS blueprint; approved source filenames supply annexure numbering, cited findings supply affidavit prose, and generated content opens in the versioned Word workspace with DOCX/PDF export and stale guards |
 | Case legal research and authority detail | `features/legal-research/`, `lib/api/legal-research.ts` | Backend research tests and UI behavior |
 | Summary-run OKF export | `features/okf-exports/`, `lib/api/okf-exports.ts` | Backend preview/provenance tests |
 | `/review-inbox` | Dashboard route and API consumers | Permission/scope behavior |

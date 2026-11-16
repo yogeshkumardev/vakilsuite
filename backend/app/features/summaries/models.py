@@ -111,6 +111,66 @@ class SummaryRun(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
 
 
+class DocumentFactCard(Base):
+    """A source-version-bound map result. Failed attempts require an explicit retry."""
+    __tablename__ = "document_fact_cards"
+    __table_args__ = (
+        UniqueConstraint("chamber_id", "source_revision_id", name="uq_fact_card_revision"),
+        Index("ix_fact_cards_case_status", "case_id", "status"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    chamber_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("chambers.id", ondelete="RESTRICT"), nullable=False)
+    case_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("cases.id", ondelete="RESTRICT"), nullable=False)
+    original_document_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="RESTRICT"), nullable=True)
+    original_file_version_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    original_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    source_revision_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    source_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_kind: Mapped[str] = mapped_column(String(24), nullable=False, server_default="reviewed_text")
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="pending")
+    content: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    error_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    provider_request_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(), default=func.now(), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(), default=func.now(), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class FactCardDelivery(Base):
+    """Committed, provider-free delivery intent for one map-stage fact card."""
+
+    __tablename__ = "fact_card_deliveries"
+    __table_args__ = (
+        UniqueConstraint(
+            "summary_run_id", "document_fact_card_id", name="uq_fact_card_delivery_run_card"
+        ),
+        Index("ix_fact_card_deliveries_dispatch", "status", "leased_until"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    summary_run_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("summary_runs.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    document_fact_card_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("document_fact_cards.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    status: Mapped[str] = mapped_column(
+        String(24), nullable=False, default="queued", server_default="queued"
+    )
+    delivery_attempt_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    leased_until: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
+    error_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(), default=func.now(), server_default=func.now(), nullable=False
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
+
+
 class SummarySourceDependency(Base):
     __tablename__ = "summary_source_dependencies"
     __table_args__ = (

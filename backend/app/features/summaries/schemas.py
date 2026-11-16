@@ -26,6 +26,18 @@ class SummarySourceCandidateResponse(BaseModel):
     reasons: list[str]
 
 
+class FactCardCoverageResponse(BaseModel):
+    document_id: uuid.UUID | None
+    revision_id: uuid.UUID | None
+    revision_sha256: str | None = None
+    card_id: uuid.UUID | None = None
+    title: str
+    eligible: bool
+    status: Literal["not_ready", "not_processed", "pending", "running", "ready", "failed", "blocked"]
+    error_code: str | None = None
+    content: CaseSummaryPayload | None = None
+
+
 class SummarySourceSelectionRequest(BaseModel):
     working_document_id: uuid.UUID
     revision_id: uuid.UUID
@@ -75,6 +87,12 @@ class SummaryRunResponse(BaseModel):
 class SubmitSummaryRunResponse(BaseModel):
     id: uuid.UUID
     status: str
+
+
+class RetryFactCardRequest(BaseModel):
+    """An explicit acknowledgement is required after an uncertain provider outcome."""
+
+    acknowledge_provider_outcome_unknown: bool = False
 
 
 class SummaryReviewDecisionResponse(BaseModel):

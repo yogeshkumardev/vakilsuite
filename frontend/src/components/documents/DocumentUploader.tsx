@@ -30,6 +30,7 @@ export function DocumentUploader({ caseId, onSuccess, origin, prefilledFile }: {
     const [message, setMessage] = useState("");
     const [retryLabel, setRetryLabel] = useState<string | null>(null);
     const attempt = useRef<UploadAttempt | null>(null);
+    const queued = useRef<UploadAttempt[]>([]);
     const active = useRef<AbortController | null>(null);
     const generation = useAuthStore((state) => state.generation);
 
@@ -37,19 +38,24 @@ export function DocumentUploader({ caseId, onSuccess, origin, prefilledFile }: {
         active.current?.abort();
         active.current = null;
         attempt.current = null;
+        queued.current = [];
     }, [caseId, generation]);
+
+    function newAttempt(file: File): UploadAttempt | null {
+        if (!ALLOWED_MIME.includes(file.type) || file.size <= 0 || file.size > 50 * 1024 * 1024) {
+            setMessage(`${file.name}: choose a non-empty PDF, DOCX, JPG, PNG, TIFF or WebP file up to 50MB.`);
+            setPhase("error");
+            return null;
+        }
+        return { id: crypto.randomUUID(), caseId, file, documentType: docType, origin: origin ?? "web_upload" };
+    }
 
     async function upload(file?: File) {
         if (active.current || !permissions.data?.can_edit) return;
         if (file) {
-            if (!ALLOWED_MIME.includes(file.type) || file.size <= 0 || file.size > 50 * 1024 * 1024) {
-                attempt.current = null;
-                setRetryLabel(null);
-                setMessage("Choose a non-empty PDF, DOCX, JPG, PNG, TIFF or WebP file up to 50MB.");
-                setPhase("error");
-                return;
-            }
-            attempt.current = { id: crypto.randomUUID(), caseId, file, documentType: docType, origin: origin ?? "web_upload" };
+            const next = newAttempt(file);
+            if (!next) return;
+            attempt.current = next;
         }
         const current = attempt.current;
         if (!current) return;
@@ -78,8 +84,26 @@ export function DocumentUploader({ caseId, onSuccess, origin, prefilledFile }: {
             setMessage(error instanceof Error ? error.message : "Upload failed. Please retry.");
             void qc.invalidateQueries({ queryKey: documentKeys.list(caseId) });
         } finally {
-            if (active.current === controller) active.current = null;
+            if (active.current === controller) {
+                active.current = null;
+                if (attempt.current === null) {
+                    const next = queued.current.shift();
+                    if (next) {
+                        attempt.current = next;
+                        void upload();
+                    }
+                }
+            }
         }
+    }
+
+    function uploadFiles(files: FileList | File[]) {
+        if (busy) return;
+        const attempts = Array.from(files).map(newAttempt).filter((value): value is UploadAttempt => value !== null);
+        if (!attempts.length) return;
+        queued.current.push(...attempts.slice(1));
+        attempt.current = attempts[0];
+        void upload();
     }
 
     if (permissions.isPending) return <p className="text-sm text-slate-500">Checking upload permission…</p>;
@@ -99,13 +123,14 @@ export function DocumentUploader({ caseId, onSuccess, origin, prefilledFile }: {
             </label>
             <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-slate-200 p-6 text-center text-sm focus-within:ring-2 focus-within:ring-emerald-600"
                 onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => { e.preventDefault(); if (!busy && e.dataTransfer.files[0]) void upload(e.dataTransfer.files[0]); }}>
-                <span>Drop file here or click to browse</span>
+                onDrop={(e) => { e.preventDefault(); if (!busy) uploadFiles(e.dataTransfer.files); }}>
+                <span>Drop files here or click to browse</span>
                 <span className="text-xs text-slate-500">PDF, DOCX, JPG, PNG, TIFF, WebP · max 50MB</span>
-                <input aria-label="Choose document" type="file" className="sr-only" disabled={busy}
+                <input aria-label="Choose documents" type="file" multiple className="sr-only" disabled={busy}
                     accept=".pdf,.docx,.jpg,.jpeg,.png,.tiff,.tif,.webp"
-                    onChange={(e) => { const file = e.target.files?.[0]; if (file) void upload(file); e.target.value = ""; }} />
+                    onChange={(e) => { if (e.target.files?.length) uploadFiles(e.target.files); e.target.value = ""; }} />
             </label>
+            {queued.current.length > 0 && <p role="status" className="text-sm text-slate-600">{queued.current.length} more file{queued.current.length === 1 ? "" : "s"} queued.</p>}
             {prefilledFile && phase !== "success" && <button type="button" disabled={busy} onClick={() => void upload(prefilledFile)} className="min-h-11 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600 disabled:opacity-60">Upload prepared PDF</button>}
             {busy && <progress aria-label="Upload progress" value={progress} max={100} className="w-full" />}
             {message && <p role={phase === "error" ? "alert" : "status"} className={phase === "error" ? "text-sm text-red-700" : "text-sm text-slate-600"}>{message}{busy ? ` · ${progress}%` : ""}</p>}

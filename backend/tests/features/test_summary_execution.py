@@ -22,7 +22,7 @@ async def test_concise_eleven_source_run_publishes_once(monkeypatch):
     run = NS(
         id=uuid.uuid4(), created_by_user_id=user.id,
         status=SummaryRunStatus.running, prompt_version=SIMPLE_PROMPT_VERSION,
-        schema_version="case-summary-v3", output_language="en-IN",
+        schema_version="case-summary-v2", output_language="en-IN",
         input_tokens=500, source_manifest_hash="a" * 64,
     )
     attempts = []

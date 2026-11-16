@@ -1,0 +1,30 @@
+court_code: allahabad_hc
+name: High Court of Judicature at Allahabad
+country: IN
+benches:
+  - code: allahabad
+    name: Principal Seat, Allahabad
+  - code: lucknow
+    name: Lucknow Bench
+filing_modes:
+  - physical
+  - efiling
+pleading_languages:
+  - en
+  - hi
+  - mixed
+required_attributes:
+  common:
+    - font.english
+    - font.hindi
+    - line_spacing
+    - bold.roles
+    - italic.roles
+    - italic.prayer
+  physical:
+    - page.size
+    - margin.quarter_rule
+  efiling:
+    - page.size
+    - margins
+    - justification

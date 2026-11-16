@@ -112,6 +112,12 @@ export function CaseDraftsWorkspace({ caseId }: { caseId: string }) {
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
+                        <Link
+                            href={`/cases/${caseId}/drafts/bail-483`}
+                            className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-50"
+                        >
+                            Regular Bail (S. 483)
+                        </Link>
                         {latestApproved ? (
                             <Link
                                 href={`/cases/${caseId}/drafts/new/${latestApproved.id}`}
@@ -163,6 +169,12 @@ export function CaseDraftsWorkspace({ caseId }: { caseId: string }) {
                 </div>
 
                 <div className="pt-2">
+                    <Link
+                        href={`/cases/${caseId}/drafts/bail-483`}
+                        className="mb-3 inline-flex min-h-10 items-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    >
+                        Prepare Regular Bail (S. 483)
+                    </Link>
                     {latestApproved ? (
                         <Link
                             href={`/cases/${caseId}/drafts/new/${latestApproved.id}`}

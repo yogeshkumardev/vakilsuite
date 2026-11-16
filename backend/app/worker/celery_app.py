@@ -10,7 +10,7 @@ from app.core.config import settings
 celery_app = Celery(
     "vakilsuite_worker",
     broker=settings.CELERY_BROKER_URL,
-    include=["app.worker.tasks.source_ocr", "app.worker.tasks.s528_draft", "app.worker.tasks.dummy", "app.worker.tasks.workflow_resume", "app.worker.tasks.export_working_document", "app.worker.tasks.summary_generation", "app.worker.tasks.legal_research", "app.worker.tasks.auth_email"],
+    include=["app.worker.tasks.source_ocr", "app.worker.tasks.s528_draft", "app.worker.tasks.dummy", "app.worker.tasks.workflow_resume", "app.worker.tasks.export_working_document", "app.worker.tasks.export_court_draft", "app.worker.tasks.summary_generation", "app.worker.tasks.court_draft_generation", "app.worker.tasks.legal_research", "app.worker.tasks.auth_email"],
 )
 
 celery_app.conf.update(
@@ -26,3 +26,5 @@ celery_app.conf.update(
 )
 
 celery_app.conf.beat_schedule = {**(celery_app.conf.beat_schedule or {}), "recover-s528-drafts": {"task": "app.worker.tasks.s528_draft.recover_drafts", "schedule": 15.0}, "recover-auth-email-outbox": {"task": "app.worker.tasks.auth_email.recover_auth_email_outbox", "schedule": 30.0}}
+celery_app.conf.beat_schedule["recover-unknown-fact-cards"] = {"task": "app.worker.tasks.summary_generation.recover_unknown_fact_cards", "schedule": 60.0}
+celery_app.conf.beat_schedule["recover-fact-card-deliveries"] = {"task": "app.worker.tasks.summary_generation.recover_fact_card_deliveries", "schedule": 60.0}

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.features.summaries.models import (
@@ -36,6 +36,9 @@ async def invalidate_summaries_for_revision(
         if run.status != SummaryRunStatus.stale:
             run.status = SummaryRunStatus.stale
             stale.append(run.id)
+    if stale:
+        from app.features.drafts.models import CourtDraft
+        await db.execute(update(CourtDraft).where(CourtDraft.summary_run_id.in_(stale)).values(status="stale", stale_reason="SUMMARY_CHANGED"))
     await db.flush()
     return stale
 
@@ -54,5 +57,8 @@ async def invalidate_summaries_for_case(
         if run.status != SummaryRunStatus.stale:
             run.status = SummaryRunStatus.stale
             stale.append(run.id)
+    if stale:
+        from app.features.drafts.models import CourtDraft
+        await db.execute(update(CourtDraft).where(CourtDraft.summary_run_id.in_(stale)).values(status="stale", stale_reason="SUMMARY_CHANGED"))
     await db.flush()
     return stale

@@ -30,11 +30,18 @@ from app.features.revisions.models import WorkingDocumentRevision
 from app.features.revisions.repository import WorkingDocumentRepository
 from app.features.summaries.contracts import CaseSummaryPayload
 from app.features.summaries.models import (
+    DocumentFactCard,
+    FactCardDelivery,
     SummaryProviderAttempt,
     SummaryRun,
     SummaryRunStatus,
     SummarySourceDependency,
 )
+from app.features.summaries.fact_cards import (
+    cards_for_run, ensure_cards, map_contents, source_hash, synthesis_contents,
+    validate_synthesis_citations,
+)
+from app.features.summaries.map_reduce_graph import run_reduce_graph
 from app.features.summaries.prompt import PROMPT_VERSION, SIMPLE_PROMPT_VERSION, build_case_summary_contents
 from app.features.summaries.semantic_validation import validate_summary_semantics
 from app.features.summaries.structured import UnverifiedSummary
@@ -100,7 +107,10 @@ class SummaryGenerationService:
         if run.status == SummaryRunStatus.running:
             # Redeliver an accepted queue intent after broker/network failure.
             # The worker's persisted provider attempt prevents a second paid call.
-            await self._authorize_and_collect(run=run, user=user)
+            source_records, _ = await self._authorize_and_collect(run=run, user=user)
+            if run.schema_version == "case-summary-v3":
+                await self._ensure_pending_card_deliveries(run, source_records)
+                await self.db.commit()
             return run
         if run.status != SummaryRunStatus.pending:
             raise ConflictError(
@@ -109,6 +119,9 @@ class SummaryGenerationService:
         source_records, task_policy = await self._authorize_and_collect(
             run=run, user=user
         )
+        if run.schema_version == "case-summary-v3":
+            await ensure_cards(self.db, run, source_records)
+            await self._ensure_pending_card_deliveries(run, source_records)
         run.input_tokens = await self._validate_summary_reservation(
             run=run,
             source_records=source_records,
@@ -152,6 +165,8 @@ class SummaryGenerationService:
         if route is None:
             await self._fail(run, "NO_SUPPORTED_PROVIDER")
             return "failed"
+        if run.schema_version == "case-summary-v3":
+            return await self._execute_synthesis(run, source_records, task_policy, route)
         from .structured import PROMPT_VERSION as V2_PROMPT, StructuredSummary, UnverifiedSummary
 
         structured = run.prompt_version == V2_PROMPT
@@ -254,6 +269,202 @@ class SummaryGenerationService:
             input_tokens=input_tokens,
             output_tokens=output_tokens,
             provider_request_id=provider_request_id,
+        )
+
+    async def execute_card(self, *, card_id: uuid.UUID, run_id: uuid.UUID) -> str:
+        """One source per paid map task; a reserved call is never replayed blindly."""
+        run = await self.db.get(SummaryRun, run_id)
+        card = await self.db.get(DocumentFactCard, card_id, with_for_update=True)
+        if run is None or card is None or card.case_id != run.case_id or card.chamber_id != run.chamber_id:
+            raise NotFoundError("Fact card not found")
+        if card.status != "pending" or run.status != SummaryRunStatus.running:
+            return card.status
+        user = await self.db.get(User, run.created_by_user_id)
+        if user is None:
+            card.status, card.error_code = "failed", "USER_UNAVAILABLE"
+            await self.db.commit()
+            return "failed"
+        try:
+            records, policy = await self._authorize_and_collect(run=run, user=user)
+            record = next(record for record in records if str(record["source_revision_id"]) == str(card.source_revision_id))
+            if card.source_sha256 != source_hash(run, record):
+                raise ConflictError("Fact card source changed")
+            route = self._gemini_route(policy)
+            if route is None:
+                raise ValidationError("No summary provider")
+            contents = map_contents(record, run.output_language)
+            pdf_sources, _ = await self._load_summary_pdf_sources(source_records=[record], contents=contents, max_input_bytes=policy.max_input_bytes)
+            if len(contents.encode("utf-8")) > policy.max_input_bytes:
+                raise ValidationError("Fact card input exceeds policy")
+            self._validate_pricing_and_budget(task_policy=policy, route=route, input_tokens=max(1, len(contents.encode("utf-8")) // 3 + sum(len(p["data"]) for p in pdf_sources) // 3), max_output_tokens=min(8192, policy.max_output_tokens))
+        except (StopIteration, ConflictError, NotFoundError, ForbiddenError, ValidationError):
+            card.status, card.error_code = "failed", "SOURCE_OR_POLICY_CHANGED"
+            await self.db.commit()
+            return "failed"
+        card.status = "running"
+        card.error_code = None
+        await self.db.commit()
+        outcome = GeminiAdapter(model=route.model).summarize_case(
+            contents=contents, max_output_tokens=min(8192, policy.max_output_tokens),
+            pdf_sources=pdf_sources, structured=False,
+            deadline_seconds=policy.deadline_seconds,
+        )
+        card = await self.db.get(DocumentFactCard, card_id, with_for_update=True)
+        if isinstance(outcome, ProviderError):
+            card.status = "blocked" if outcome.outcome_unknown else "failed"
+            card.error_code = outcome.error_code.value
+            card.provider_request_id = outcome.provider_request_id
+        else:
+            payload, _, _, request_id = outcome
+            try:
+                if not isinstance(payload, CaseSummaryPayload) or payload.output_language != run.output_language:
+                    raise ValueError("Invalid fact card output")
+                self._validate_payload(payload, [record])
+                # Recheck authorization after the external call before publishing.
+                await self._authorize_and_collect(run=run, user=user)
+                card.content = payload.model_dump(mode="json")
+                card.status, card.error_code = "ready", None
+                card.provider_request_id = request_id
+            except (ValueError, ConflictError, NotFoundError, ForbiddenError, ValidationError):
+                card.status, card.error_code = "failed", "INVALID_OR_STALE_FACT_CARD"
+        await self.db.commit()
+        return card.status
+
+    async def authorize_card_retry(
+        self,
+        *,
+        case_id: uuid.UUID,
+        run_id: uuid.UUID,
+        card_id: uuid.UUID,
+        user: User,
+        acknowledge_provider_outcome_unknown: bool = False,
+    ) -> DocumentFactCard:
+        run = await self._run_for_user(run_id=run_id, user=user, lock=True)
+        card = await self.db.get(DocumentFactCard, card_id, with_for_update=True)
+        if run.case_id != case_id or card is None or card.case_id != case_id or card.chamber_id != run.chamber_id:
+            raise NotFoundError("Fact card not found")
+        records, _ = await self._authorize_and_collect(run=run, user=user)
+        if not any(str(record["source_revision_id"]) == str(card.source_revision_id) and source_hash(run, record) == card.source_sha256 for record in records):
+            raise ConflictError("Fact card source is no longer current")
+        if card.status not in {"failed", "blocked"}:
+            raise ConflictError("Only a failed or blocked fact card can be processed again")
+        if card.status == "blocked" and not acknowledge_provider_outcome_unknown:
+            raise ConflictError(
+                "The previous provider outcome is unknown. Acknowledge that retrying may incur another charge."
+            )
+        if run.status not in {SummaryRunStatus.running, SummaryRunStatus.failed}:
+            raise ConflictError("This summary run cannot resume")
+        if run.status == SummaryRunStatus.failed and run.error_code != "FACT_CARD_FAILED":
+            raise ConflictError("Prepare a new summary run for this failure")
+        card.status, card.error_code = "pending", None
+        if run.status == SummaryRunStatus.failed and run.error_code == "FACT_CARD_FAILED":
+            run.status, run.error_code = SummaryRunStatus.running, None
+        await self._ensure_pending_card_deliveries(run, records)
+        await self.db.commit()
+        return card
+
+    async def resume_pending_fact_card_deliveries(
+        self, *, case_id: uuid.UUID, run_id: uuid.UUID, user: User
+    ) -> tuple[SummaryRun, int]:
+        """Restore broker delivery for an already-authorized running map stage."""
+        run = await self._run_for_user(run_id=run_id, user=user, lock=True)
+        if run.case_id != case_id or run.schema_version != "case-summary-v3":
+            raise NotFoundError("Summary run not found")
+        if run.status != SummaryRunStatus.running:
+            raise ConflictError("Only a running summary can resume pending fact cards")
+        records, _ = await self._authorize_and_collect(run=run, user=user)
+        created = await self._ensure_pending_card_deliveries(run, records)
+        await self.db.commit()
+        return run, created
+
+    async def _ensure_pending_card_deliveries(
+        self, run: SummaryRun, records: list[dict[str, object]]
+    ) -> int:
+        """Persist map-task delivery intents before any broker publication.
+
+        The unique run/card pair makes repeated submit or recovery requests
+        idempotent.  A pending fact card is the only state that can receive an
+        intent; a card with an unknown provider outcome is deliberately absent.
+        """
+        cards = await cards_for_run(self.db, run, records)
+        pending_ids = {card.id for card in cards if card.status == "pending"}
+        if not pending_ids:
+            return 0
+        existing = {
+            delivery.document_fact_card_id: delivery
+            for delivery in await self.db.scalars(
+                select(FactCardDelivery)
+                .where(
+                    FactCardDelivery.summary_run_id == run.id,
+                    FactCardDelivery.document_fact_card_id.in_(pending_ids),
+                )
+                .with_for_update()
+            )
+        }
+        created = pending_ids - set(existing)
+        self.db.add_all(
+            FactCardDelivery(summary_run_id=run.id, document_fact_card_id=card_id)
+            for card_id in created
+        )
+        reactivated = 0
+        for delivery in existing.values():
+            if delivery.status != "queued":
+                delivery.status = "queued"
+                delivery.delivery_attempt_count = 0
+                delivery.leased_until = None
+                delivery.error_code = None
+                delivery.completed_at = None
+                reactivated += 1
+        return len(created) + reactivated
+
+    async def _execute_synthesis(self, run, records, policy, route) -> str:
+        cards = await cards_for_run(self.db, run, records)
+        async def synthesize() -> str:
+            return await self._synthesize_ready_cards(run, records, policy, route, cards)
+        outcome = await run_reduce_graph([card.status for card in cards], synthesize)
+        if outcome == "fact_card_failed":
+            await self._fail(run, "FACT_CARD_FAILED")
+            return "failed"
+        return outcome
+
+    async def _synthesize_ready_cards(self, run, records, policy, route, cards) -> str:
+        contents = synthesis_contents(cards, run.output_language)
+        if len(contents.encode("utf-8")) > policy.max_input_bytes:
+            await self._fail(run, "FACT_CARD_INPUT_LIMIT")
+            return "failed"
+        previous = await self.db.scalar(select(SummaryProviderAttempt.id).where(SummaryProviderAttempt.summary_run_id == run.id).limit(1))
+        if previous is not None:
+            return "running"
+        attempt = SummaryProviderAttempt(
+            summary_run_id=run.id, sequence=1, provider="gemini", model=route.model,
+            input_manifest_hash=run.source_manifest_hash, status="submitted",
+        )
+        self.db.add(attempt)
+        run.provider, run.model = "gemini", route.model
+        await self.db.commit()
+        outcome = GeminiAdapter(model=route.model).summarize_case(
+            contents=contents, max_output_tokens=min(policy.max_output_tokens, self._output_cap(run.prompt_version)),
+            pdf_sources=[], structured=False, deadline_seconds=policy.deadline_seconds,
+        )
+        if isinstance(outcome, ProviderError):
+            await self._record_provider_failure(run_id=run.id, attempt_id=attempt.id, error=outcome)
+            return "failed"
+        payload, input_tokens, output_tokens, request_id = outcome
+        if isinstance(payload, UnverifiedSummary):
+            report = self._unverified_report()
+        else:
+            try:
+                if not isinstance(payload, CaseSummaryPayload) or payload.output_language != run.output_language:
+                    raise ValueError("Invalid synthesis output")
+                validate_synthesis_citations(payload, cards)
+                report = self._validate_payload(payload, records)
+            except ValueError:
+                payload = UnverifiedSummary(raw_text=payload.model_dump_json(), reason="failed_validation")
+                report = self._unverified_report()
+        return await self._publish_if_current(
+            run_id=run.id, attempt_id=attempt.id, payload=payload,
+            validation_report=report, input_tokens=input_tokens,
+            output_tokens=output_tokens, provider_request_id=request_id,
         )
 
     @staticmethod
@@ -448,6 +659,39 @@ class SummaryGenerationService:
             raise ValidationError(
                 "Configure current model-matched pricing before case summary generation"
             )
+        if run.schema_version == "case-summary-v3":
+            cards = await cards_for_run(self.db, run, source_records)
+            total_input = 0
+            missing = 0
+            for record, card in zip(source_records, cards):
+                if card.status == "ready":
+                    continue
+                if card.status in {"failed", "blocked"}:
+                    raise ConflictError("A document fact card failed. Process that document before generating the summary")
+                missing += 1
+                contents = map_contents(record, run.output_language)
+                pdf_sources, _ = await self._load_summary_pdf_sources(
+                    source_records=[record], contents=contents,
+                    max_input_bytes=task_policy.max_input_bytes,
+                )
+                counted = await asyncio.to_thread(
+                    GeminiAdapter(model=route.model).count_case_summary_tokens,
+                    contents=contents, pdf_sources=pdf_sources,
+                )
+                if isinstance(counted, ProviderError):
+                    raise ValidationError("Could not estimate document fact-card cost")
+                total_input += counted
+            # Pending cards have a bounded worst-case JSON estimate; synthesis
+            # never reads their original PDFs again.
+            synthesis_bytes = len(synthesis_contents([card for card in cards if card.status == "ready"], run.output_language).encode("utf-8")) if missing < len(cards) else 0
+            synthesis_bytes += missing * 40_000
+            if synthesis_bytes > task_policy.max_input_bytes:
+                raise ValidationError("Fact cards may exceed the synthesis input limit")
+            total_input += math.ceil(synthesis_bytes / 2) + SUMMARY_ESTIMATE_OVERHEAD_TOKENS
+            output_bound = missing * min(8192, task_policy.max_output_tokens) + min(self._output_cap(run.prompt_version), task_policy.max_output_tokens)
+            if _estimated_reservation_paise(input_tokens=total_input, output_tokens=output_bound) > task_policy.run_budget_paise:
+                raise ValidationError("Estimated map and synthesis cost exceeds the chamber summary budget")
+            return total_input
         contents = build_case_summary_contents(
             source_records=source_records,
             language=getattr(run, "output_language", "en-IN"),

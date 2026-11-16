@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import uuid
+from app.features.summaries.models import DocumentFactCard
+from app.core.exceptions import NotFoundError
+from app.features.summaries.fact_cards import card_source_view
+from app.features.cases.repository import CaseRepository
 from .source_navigation import SummarySourceView, resolve_source
 
 from fastapi import APIRouter
@@ -16,6 +20,8 @@ from app.features.summaries.schemas import (
     SummaryRunDetailResponse,
     SummaryRunResponse,
     SummarySourceCandidateResponse,
+    FactCardCoverageResponse,
+    RetryFactCardRequest,
     SubmitSummaryRunResponse,
 )
 from app.features.summaries.generation import SummaryGenerationService
@@ -41,6 +47,21 @@ async def list_summary_source_candidates(
             case_id=case_id, user=current_user
         ),
     }
+
+
+@router.get("/{case_id}/fact-card-coverage", response_model=SuccessResponse[list[FactCardCoverageResponse]], operation_id="summaries_fact_card_coverage", responses=ERROR_RESPONSES)
+async def fact_card_coverage(case_id: uuid.UUID, current_user: CurrentUser, db: DB):
+    return {"success": True, "data": await SummaryPreparationService(db).fact_card_coverage(case_id=case_id, user=current_user)}
+
+
+@router.get("/{case_id}/fact-cards/{card_id}/sources/{section_index}/{finding_index}/{citation_index}", response_model=SuccessResponse[SummarySourceView], operation_id="summaries_fact_card_source", responses=ERROR_RESPONSES)
+async def fact_card_source(case_id: uuid.UUID, card_id: uuid.UUID, section_index: int, finding_index: int, citation_index: int, current_user: CurrentUser, db: DB):
+    if not await CaseRepository(db).can_access(case_id, current_user.id):
+        raise NotFoundError("Fact card not found")
+    card = await db.get(DocumentFactCard, card_id)
+    if card is None or card.case_id != case_id:
+        raise NotFoundError("Fact card not found")
+    return {"success": True, "data": await card_source_view(db, card=card, user=current_user, section_index=section_index, finding_index=finding_index, citation_index=citation_index)}
 
 
 @router.get(
@@ -92,13 +113,66 @@ async def submit_summary_run(
     run = await SummaryGenerationService(db).authorize_submission(
         case_id=case_id, run_id=run_id, user=current_user
     )
-    from app.worker.tasks.summary_generation import generate_summary_run
-
+    from app.worker.tasks.summary_generation import (
+        dispatch_fact_card_deliveries,
+        generate_summary_run,
+    )
+    if run.schema_version == "case-summary-v3":
+        dispatch_fact_card_deliveries.delay(str(run.id))
     generate_summary_run.delay(str(run.id))
     return {
         "success": True,
         "data": SubmitSummaryRunResponse(id=run.id, status=run.status.value),
     }
+
+
+@router.post("/{case_id}/summary-runs/{run_id}/fact-cards/{card_id}/retry", status_code=202, response_model=SuccessResponse[SubmitSummaryRunResponse], operation_id="summaries_retry_fact_card", responses=ERROR_RESPONSES)
+async def retry_fact_card(
+    case_id: uuid.UUID,
+    run_id: uuid.UUID,
+    card_id: uuid.UUID,
+    current_user: CurrentUser,
+    db: DB,
+    body: RetryFactCardRequest,
+):
+    await SummaryGenerationService(db).authorize_card_retry(
+        case_id=case_id,
+        run_id=run_id,
+        card_id=card_id,
+        user=current_user,
+        acknowledge_provider_outcome_unknown=body.acknowledge_provider_outcome_unknown,
+    )
+    from app.worker.tasks.summary_generation import dispatch_fact_card_deliveries
+    dispatch_fact_card_deliveries.delay(str(run_id))
+    return {"success": True, "data": SubmitSummaryRunResponse(id=run_id, status="running")}
+
+
+@router.post(
+    "/{case_id}/summary-runs/{run_id}/resume-fact-card-deliveries",
+    status_code=202,
+    response_model=SuccessResponse[SubmitSummaryRunResponse],
+    operation_id="summaries_resume_fact_card_deliveries",
+    responses=ERROR_RESPONSES,
+)
+async def resume_fact_card_deliveries(
+    case_id: uuid.UUID, run_id: uuid.UUID, current_user: CurrentUser, db: DB
+):
+    run, _ = await SummaryGenerationService(db).resume_pending_fact_card_deliveries(
+        case_id=case_id, run_id=run_id, user=current_user
+    )
+    from app.worker.tasks.summary_generation import dispatch_fact_card_deliveries
+
+    dispatch_fact_card_deliveries.delay(str(run.id))
+    return {"success": True, "data": SubmitSummaryRunResponse(id=run.id, status=run.status.value)}
+
+
+@router.post("/{case_id}/summary-runs/{run_id}/regenerate-incomplete", status_code=202, response_model=SuccessResponse[SubmitSummaryRunResponse], operation_id="summaries_regenerate_incomplete", responses=ERROR_RESPONSES)
+async def regenerate_incomplete(case_id: uuid.UUID, run_id: uuid.UUID, current_user: CurrentUser, db: DB):
+    prepared = await SummaryPreparationService(db).prepare_synthesis_retry(case_id=case_id, run_id=run_id, user=current_user)
+    run = await SummaryGenerationService(db).authorize_submission(case_id=case_id, run_id=prepared.id, user=current_user)
+    from app.worker.tasks.summary_generation import generate_summary_run
+    generate_summary_run.delay(str(run.id))
+    return {"success": True, "data": SubmitSummaryRunResponse(id=run.id, status=run.status.value)}
 
 
 @router.get(

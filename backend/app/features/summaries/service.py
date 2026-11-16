@@ -28,11 +28,13 @@ from app.features.summaries.models import (
     SummaryRun,
     SummaryRunStatus,
     SummarySourceDependency,
+    DocumentFactCard,
 )
 from app.features.summaries.schemas import (
     PrepareSummaryRunRequest,
     SummaryRunResponse,
     SummarySourceCandidateResponse,
+    FactCardCoverageResponse,
 )
 from app.features.users.models import User
 
@@ -205,6 +207,35 @@ class SummaryPreparationService:
                 )
             )
         return candidates
+
+    async def fact_card_coverage(self, *, case_id: uuid.UUID, user: User) -> list[FactCardCoverageResponse]:
+        candidates = await self.candidates(case_id=case_id, user=user)
+        revision_ids = [item.revision_id for item in candidates if item.eligible and item.revision_id]
+        case = await self.case_repo.get_by_id_simple(case_id)
+        cards = {card.source_revision_id: card for card in await self.db.scalars(
+            select(DocumentFactCard).where(
+                DocumentFactCard.case_id == case_id,
+                DocumentFactCard.chamber_id == case.chamber_id,
+                DocumentFactCard.source_revision_id.in_(revision_ids),
+            )
+        )} if revision_ids else {}
+        result = []
+        for item in candidates:
+            card = cards.get(item.revision_id) if item.eligible else None
+            if card and card.source_sha256 != item.revision_sha256:
+                card = None
+            result.append(FactCardCoverageResponse(
+                document_id=item.original_document_id,
+                revision_id=item.revision_id,
+                revision_sha256=item.revision_sha256,
+                card_id=card.id if card else None,
+                title=item.title,
+                eligible=item.eligible,
+                status=card.status if card else "not_processed" if item.eligible else "not_ready",
+                error_code=card.error_code if card else None,
+                content=card.content if card and card.status == "ready" else None,
+            ))
+        return result
 
     async def list_runs(
         self, *, case_id: uuid.UUID, user: User
@@ -403,6 +434,48 @@ class SummaryPreparationService:
         await self.db.commit()
         await self.db.refresh(run)
         return self._response(run, source_count=len(manifest_entries))
+
+    async def prepare_synthesis_retry(self, *, case_id: uuid.UUID, run_id: uuid.UUID, user: User) -> SummaryRunResponse:
+        case = await self._require_editable_case(case_id, user)
+        previous = await self.db.get(SummaryRun, run_id)
+        if previous is None or previous.case_id != case_id or previous.chamber_id != case.chamber_id:
+            raise NotFoundError("Summary run not found")
+        if (
+            previous.schema_version != "case-summary-v3"
+            or previous.status != SummaryRunStatus.pending_review
+            or not isinstance(previous.result_payload, dict)
+            or previous.result_payload.get("reason") != "incomplete_output"
+        ):
+            raise ConflictError("Only an incomplete synthesis can be regenerated")
+        from .coverage import require_case_coverage
+        await require_case_coverage(self.db, case_id=case_id, entries=previous.dependency_snapshot)
+        policy = await get_policy_output(self.db, chamber_id=case.chamber_id)
+        if policy.version != previous.policy_version:
+            raise ConflictError("Provider policy changed; prepare current sources again")
+        # A fresh run gets a fresh provider attempt. Fact cards retain their
+        # source-version keys, so no document is sent to the provider again.
+        run = SummaryRun(
+            chamber_id=case.chamber_id, case_id=case_id,
+            created_by_user_id=user.id, status=SummaryRunStatus.pending,
+            source_manifest_hash=previous.source_manifest_hash,
+            cache_key=hashlib.sha256(f"{previous.cache_key}:retry:{uuid.uuid4()}".encode()).hexdigest(),
+            prompt_version=previous.prompt_version, schema_version=previous.schema_version,
+            output_language=previous.output_language, policy_version=policy.version,
+            dependency_snapshot=previous.dependency_snapshot,
+        )
+        self.db.add(run)
+        await self.db.flush()
+        dependencies = list(await self.db.scalars(select(SummarySourceDependency).where(
+            SummarySourceDependency.summary_run_id == previous.id
+        )))
+        self.db.add_all(SummarySourceDependency(
+            summary_run_id=run.id,
+            working_document_revision_id=item.working_document_revision_id,
+            revision_sha256=item.revision_sha256,
+        ) for item in dependencies)
+        await self.db.commit()
+        await self.db.refresh(run)
+        return self._response(run, source_count=len(previous.dependency_snapshot))
 
     async def _require_readable_case(self, case_id: uuid.UUID, user: User):
         if not await self.case_repo.can_access(case_id, user.id):

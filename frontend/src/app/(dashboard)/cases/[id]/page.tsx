@@ -97,13 +97,9 @@ function htmlToPlainText(value: string) {
 }
 
 function DocumentsTab({ caseId }: { caseId: string }) {
-    const router = useRouter();
     return (
         <div className="space-y-4 pt-2">
-            <DocumentUploader
-                caseId={caseId}
-                onSuccess={(id) => router.push(`/cases/${caseId}/documents/${id}`)}
-            />
+            <DocumentUploader caseId={caseId} />
             <DocumentList caseId={caseId} />
         </div>
     );

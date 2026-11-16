@@ -57,6 +57,7 @@ function ScopedWorkingDocumentWorkspace({ caseId, workingDocumentId, scope, embe
             setSavedRevisionNumber(revision.revision_number);
             setNotice(`Saved revision ${revision.revision_number}. Ready for review or download.`);
             setExportJob(null);
+            void documentQuery.refetch();
         },
     });
 
@@ -118,10 +119,10 @@ function ScopedWorkingDocumentWorkspace({ caseId, workingDocumentId, scope, embe
             setExportError(error instanceof Error ? error.message : "Export failed.");
             throw error;
         }
-    }, [detail?.title, latest?.editor_document]);
+    }, [detail, latest]);
 
     const handleHeaderDownload = async (format: ExportFormat) => {
-        if (!latest?.editor_document || isHeaderExporting) return;
+        if (!latest?.editor_document || isHeaderExporting || dirty || saveMutation.isPending || (revisionNumber.current !== null && revisionNumber.current !== latest.revision_number)) return;
         setIsHeaderExporting(format);
         setNotice(null);
         setExportError(null);
@@ -201,20 +202,20 @@ function ScopedWorkingDocumentWorkspace({ caseId, workingDocumentId, scope, embe
                 <button
                     type="button"
                     title="Download editable Microsoft Word (.docx)"
-                    disabled={saveMutation.isPending || isHeaderExporting !== null}
+                    disabled={dirty || saveMutation.isPending || isHeaderExporting !== null || (savedRevisionNumber !== null && savedRevisionNumber !== latest.revision_number)}
                     onClick={() => handleHeaderDownload("docx")}
                     className="h-7 inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2 text-xs font-medium text-slate-700 shadow-2xs hover:bg-slate-50 disabled:opacity-60 disabled:cursor-wait transition"
                 >
-                    {isHeaderExporting === "docx" ? "⏳ DOCX…" : "📝 DOCX"}
+                    {isHeaderExporting === "docx" ? "⏳ DOCX…" : "Download DOCX"}
                 </button>
                 <button
                     type="button"
                     title="Download printable PDF document"
-                    disabled={saveMutation.isPending || isHeaderExporting !== null}
+                    disabled={dirty || saveMutation.isPending || isHeaderExporting !== null || (savedRevisionNumber !== null && savedRevisionNumber !== latest.revision_number)}
                     onClick={() => handleHeaderDownload("pdf")}
                     className="h-7 inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2 text-xs font-medium text-slate-700 shadow-2xs hover:bg-slate-50 disabled:opacity-60 disabled:cursor-wait transition"
                 >
-                    {isHeaderExporting === "pdf" ? "⏳ PDF…" : "📄 PDF"}
+                    {isHeaderExporting === "pdf" ? "⏳ PDF…" : "Download PDF"}
                 </button>
                 <button
                     type="button"

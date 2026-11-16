@@ -1,0 +1,263 @@
+blueprint_code: allahabad_regular_bail_483_bnss
+version: 5
+status: approved
+source:
+  title: "Advocate-approved Allahabad regular-bail draft"
+  locator: "Target draft: BAIL_REGULAR_S483_BNSS_BNS_105_115_351_352_2026 pdf.pdf"
+  note: "Derived verbatim from an approved Allahabad High Court regular-bail draft under Section 483 BNSS."
+applies_to:
+  court_code: allahabad_hc
+  bench_codes: [allahabad]
+  filing_modes: [physical, efiling]
+  pleading_languages: [en, mixed]
+draft_type: regular_bail_483_bnss
+tiers:
+  current: A
+  banner: "Approved Allahabad regular-bail boilerplate. Case-specific facts and final filing review remain required."
+required_inputs:
+  case:
+    - district
+    - case_crime_number
+    - case_crime_year
+    - police_station
+    - offence_sections
+    - jail_district
+    - custody_since
+  applicants:
+    - full_name
+    - relation_label
+    - relation_name
+    - address
+  deponents:
+    - full_name
+    - age_years
+    - relation_label
+    - relation_name
+    - address
+    - religion
+    - occupation
+    - capacity
+    - for_applicant_ids
+    - relationship_to_applicant
+  advocate:
+    - full_name
+    - enrollment_or_aor
+components:
+  - code: index_header
+    mode: template
+    required: true
+    role: body
+    template: |
+      IN THE HIGH COURT OF JUDICATURE AT ALLAHABAD
+      ***********
+      I N D E X
+      IN
+      Criminal Misc. Bail Application No. [[case.application_number]] Of [[case.application_year]]
+      ( Under Section 483 The Bhartiya Nagarik Suraksha Sanhita, 2023 )
+      DISTRICT [[case.district]]
+  - code: cause_title_applicants
+    mode: repeat
+    repeat_for: applicants
+    required: true
+    role: body
+    template: |
+      [[full_name]]                                                     ........................ Applicant
+      (In Jail since [[case.custody_since]])
+      Case Crime No. [[case.case_crime_number]] of [[case.case_crime_year]]
+      District Jail, [[case.jail_district]]
+      Date of occurrence of offence [[case.occurrence_date]]
+  - code: cause_title_respondent
+    mode: template
+    required: true
+    role: body
+    template: |
+      Versus
+      State of U.P                                                         ............... Opposite Party
+      *************
+  - code: index
+    mode: table
+    required: true
+    role: body
+    columns: [sl_no, particulars, date, annex, pages]
+  - code: index_advocate_footer
+    mode: template
+    required: true
+    role: body
+    template: |
+      Dated: [[case.filing_date]]
+      ([[advocate.full_name]])
+      Advocate
+      AOR No. [[advocate.enrollment_or_aor]]
+      Counsel for the Applicant
+      Ch.No. [[advocate.chamber_number]]
+      Mobile No. [[advocate.mobile_number]]
+  - code: application_crime_header
+    mode: template
+    required: true
+    role: body
+    template: |
+      Case Crime No. [[case.case_crime_number]] of [[case.case_crime_year]] under Sections [[case.offence_sections]], Police Station [[case.police_station]], District [[case.district]]
+  - code: application_court_header
+    mode: template
+    required: true
+    role: body
+    template: |
+      IN THE HIGH COURT OF JUDICATURE AT ALLAHABAD
+      ******************
+      Criminal Misc. Bail Application No. [[case.application_number]] Of [[case.application_year]]
+      ( Under Section 483 The Bhartiya Nagarik Suraksha Sanhita, 2023 )
+      DISTRICT-[[case.district]]
+  - code: application_cause_title_applicant
+    mode: repeat
+    repeat_for: applicants
+    required: true
+    role: body
+    template: |
+      [[full_name]], [[relation_label]] of [[relation_name]], Resident of [[address]]                 .....Applicant
+      (In Jail since [[case.custody_since]])
+      Case Crime No. [[case.case_crime_number]] of [[case.case_crime_year]]
+      District Jail, [[case.jail_district]]
+      Date of occurrence of offence [[case.occurrence_date]]
+  - code: application_cause_title_respondent
+    mode: template
+    required: true
+    role: body
+    template: |
+      Versus
+      State of U.P. through its Principal Secretary (Home), Uttar Pradesh Government, Lucknow                                        .............. Opposite Party
+      ***************
+  - code: application
+    mode: template
+    required: true
+    role: body
+    template: |
+      To,
+              The Hon'ble the Chief Justice and his other companion Judges of the aforesaid Court.
+
+              The humble application of the above-named applicant is most respectfully showeth as under: -
+      1. That the full facts have been stated in the accompanying affidavit which shall form part of this application.
+
+      2. That in view of the facts and circumstances stated in the accompanying affidavit, it is expedient in the interest of justice that this Hon'ble Court may graciously be pleased to enlarge the Applicant on bail in Case Crime No. [[case.case_crime_number]] of [[case.case_crime_year]] under Sections [[case.offence_sections]], Police Station [[case.police_station]], District [[case.district]] during the pendency of the trial before the court below, otherwise the Applicant shall suffer irreparable loss and injury.
+  - code: application_prayer_heading
+    mode: template
+    required: true
+    role: prayer
+    template: |
+      P R A Y E R
+  - code: application_prayer_body
+    mode: template
+    required: true
+    role: prayer
+    template: |
+      It is, therefore Most Respectfully prayed that this Hon'ble Court may graciously be pleased to enlarge the Applicant on bail in Case Crime No. [[case.case_crime_number]] of [[case.case_crime_year]] under Sections [[case.offence_sections]], Police Station [[case.police_station]], District [[case.district]] during the pendency of the trial pending before the court below, otherwise the Applicant shall suffer irreparable loss and injury.
+  - code: application_advocate_footer
+    mode: template
+    required: true
+    role: body
+    template: |
+      Dated: [[case.filing_date]]
+      ([[advocate.full_name]])
+      Advocate
+      AOR No. [[advocate.enrollment_or_aor]]
+      Counsel for the Applicant
+      Ch.No. [[advocate.chamber_number]]
+      Mobile No. [[advocate.mobile_number]]
+  - code: affidavit_court_header
+    mode: template
+    required: true
+    role: body
+    template: |
+      IN THE HIGH COURT OF JUDICATURE AT ALLAHABAD
+      *************
+      AFFIDAVIT
+      IN
+      Criminal Misc. Bail Application No. [[case.application_number]] Of [[case.application_year]]
+      ( Under Section 483 The Bhartiya Nagarik Suraksha Sanhita, 2023 )
+      DISTRICT-[[case.district]]
+  - code: affidavit_cause_title_applicant
+    mode: repeat
+    repeat_for: applicants
+    required: true
+    role: body
+    template: |
+      [[full_name]], [[relation_label]] of [[relation_name]], Resident of [[address]]              .......Applicant
+      (In Jail since [[case.custody_since]])
+      Case Crime No. [[case.case_crime_number]] of [[case.case_crime_year]]
+      District Jail, [[case.jail_district]]
+      Date of occurrence of offence [[case.occurrence_date]]
+  - code: affidavit_cause_title_respondent
+    mode: template
+    required: true
+    role: body
+    template: |
+      Versus
+      State of U.P. through its Principal Secretary (Home), Uttar Pradesh Government, Lucknow                                         .............. Opposite Party
+      ***************
+  - code: affidavit
+    mode: repeat
+    repeat_for: deponents
+    required: true
+    role: body
+    variants:
+      applicant:
+        when: "capacity == applicant"
+        opening: "That the deponent is the applicant in the above-noted case and as such is well acquainted with the facts deposed to below."
+      representative:
+        when: "capacity == representative"
+        opening: "That the deponent is [[relationship_to_applicant]] of the applicant and doing pairvi on behalf of the applicant in the above noted case and as such he/she is well acquainted with the facts deposed to below."
+    template: |
+      Affidavit of [[full_name]], aged about [[age_years]] years, [[relation_label]] of [[relation_name]], Resident of [[address]], Religion- [[religion]], Occupation [[occupation]]
+      (DEPONENT)
+      I, the deponent above named do hereby solemnly affirm and state on oath as under: -
+      1. [[variant.opening]]
+      2. That the position of any previous or pending bail application before this Hon'ble Court, the Hon'ble Apex Court or any other court is [[declarations.prior_bail_applications]].
+      3. That the applicant has no criminal history and has not been previously convicted in any criminal case [[declarations.criminal_history]].
+      4. That the instant matter is not related to CBI / Prevention of Corruption Act / ED / NRHM Scam / GPF Scam / matters of MP / MLA etc.
+      5. That the deponent has tried his level best to obtain a fair and legible copy of the documents and annexed this affidavit in support of the present application. Apart from the documents attached with this affidavit, there is no other more legible copy available, hence please accept the present application and remove any defect as reported by the Stamp Reporting Section if any.
+      [[case_specific_affidavit_paragraphs]]
+      That it is expedient in the interest of justice that this Hon'ble Court may graciously be pleased to enlarge the applicant on bail in Case Crime No. [[case.case_crime_number]] of [[case.case_crime_year]] under Sections [[case.offence_sections]], Police Station [[case.police_station]], District [[case.district]] during the pendency of the trial pending in the court below, otherwise the Applicant shall suffer irreparable loss and injury.
+      VERIFICATION
+      I, the deponent do hereby swear that the contents of paragraph nos. [[verification.personal_knowledge_paragraphs]] of the affidavit are true to the personal knowledge of the deponent; those of paragraph nos. [[verification.record_paragraphs]] of the affidavit are based on perusal of records; and those of paragraph nos. [[verification.legal_advice_paragraphs]] of the affidavit are based on legal advice, which the deponent also believes to be true; that nothing material has been concealed and that no part of this affidavit is false.
+      So Help Me God.                            Deponent
+      I, [[advocate.full_name]] Advocate, High Court Allahabad do hereby identify the deponent from perusal of the papers in my possession and I am satisfied that he/she is the same person making this affidavit.
+                                                                      Advocate
+      Solemnly affirm before me this [[verification.day]] day of [[verification.month]], [[verification.year]] at [[verification.time]] by the deponent who is identified by the aforesaid Advocate.
+      I have satisfied myself by examining the deponent that he/she understands the contents of this affidavit whichever been read over and explained to him/her.
+                                                                               Oath Commissioner
+  - code: annexure_paper
+    mode: template
+    required: true
+    role: body
+    template: |
+      IN THE HIGH COURT OF JUDICATURE AT ALLAHABAD
+      **************
+      ANNEXURE NO. ...............
+      IN
+      Criminal Misc. Bail Application No. [[case.application_number]] Of [[case.application_year]]
+      ( Under Section 483 The Bhartiya Nagarik Suraksha Sanhita, 2023 )
+      DISTRICT [[case.district]]
+  - code: annexure_cause_title_applicant
+    mode: repeat
+    repeat_for: applicants
+    required: true
+    role: body
+    template: |
+      [[full_name]]                                                     ........................ Applicant
+      (In Jail since [[case.custody_since]])
+      Case Crime No. [[case.case_crime_number]] of [[case.case_crime_year]]
+      District Jail, [[case.jail_district]]
+      Date of occurrence of offence [[case.occurrence_date]]
+  - code: annexure_cause_title_respondent
+    mode: template
+    required: true
+    role: body
+    template: |
+      Versus
+      State of U.P.                                                   ................... Opposite Party
+      *************
+  - code: parcha
+    mode: template
+    required: true
+    role: body
+    template: |
+      PARCHA: [[case.case_crime_number]] / [[case.case_crime_year]]

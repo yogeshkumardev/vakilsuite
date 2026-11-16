@@ -50,6 +50,8 @@ from app.features.summaries.models import (  # noqa: F401 — S07-04/06
     SummaryReviewDecision,
     SummaryRun,
     SummarySourceDependency,
+    DocumentFactCard,
+    FactCardDelivery,
 )
 from app.features.legal_research.models import (  # noqa: F401 — Indian Kanoon foundation
     LegalAuthority,
@@ -71,3 +73,4 @@ from app.features.documents.source_models import (  # noqa: F401
     ReviewedSourceProvenance,
     DocumentTypingAttempt,
 )
+from app.features.drafts.models import AdvocateCourtRegistration, AdvocateProfile, CourtDraft, DraftDownload  # noqa: F401

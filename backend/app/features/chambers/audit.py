@@ -28,6 +28,7 @@ class ChamberAuditEventType(str, enum.Enum):
     case_access_revoked = "case_access.revoked"
     case_archived = "case.archived"
     case_soft_deleted = "case.soft_deleted"
+    draft_downloaded = "draft.download"
 
 
 class ChamberAuditEvent(Base):

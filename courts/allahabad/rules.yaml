@@ -1,0 +1,128 @@
+court_code: allahabad_hc
+rules:
+  - attribute: font.english
+    value: { family: "Times New Roman", size_pt: 14 }
+    class: mandatory
+    authority_rank: 1
+    effective_from: 2026-11-12
+    source:
+      title: "WRIC(A) 31056 of 2026"
+      file: "court-sources/allahabad/WRIC(A)_31056_2026.pdf"
+      locator: "PDF pages 12-13, direction 10(ii)"
+    status: verified
+  - attribute: font.hindi
+    value: { family: "Mangal", size_pt: 14, complex_script: true }
+    class: mandatory
+    authority_rank: 1
+    effective_from: 2026-11-12
+    source:
+      title: "WRIC(A) 31056 of 2026"
+      file: "court-sources/allahabad/WRIC(A)_31056_2026.pdf"
+      locator: "PDF pages 12-13, direction 10(ii)"
+    status: verified
+  - attribute: line_spacing
+    value: double
+    class: mandatory
+    authority_rank: 1
+    effective_from: 2026-11-12
+    source:
+      title: "WRIC(A) 31056 of 2026"
+      file: "court-sources/allahabad/WRIC(A)_31056_2026.pdf"
+      locator: "PDF pages 12-13, direction 10(ii)"
+    status: verified
+  - attribute: bold.roles
+    value: [annexure_marking, annexure_description, index]
+    class: style
+    authority_rank: 1
+    effective_from: 2026-11-12
+    source:
+      title: "WRIC(A) 31056 of 2026"
+      file: "court-sources/allahabad/WRIC(A)_31056_2026.pdf"
+      locator: "PDF page 12, direction 10(iii)"
+    status: verified
+  - attribute: italic.roles
+    value: [extract, court_ref, statute_ref]
+    class: style
+    authority_rank: 1
+    effective_from: 2026-11-12
+    source:
+      title: "WRIC(A) 31056 of 2026"
+      file: "court-sources/allahabad/WRIC(A)_31056_2026.pdf"
+      locator: "PDF page 13, direction 10(iv)"
+    status: verified
+  - attribute: italic.prayer
+    value: false
+    class: mandatory
+    authority_rank: 1
+    effective_from: 2026-11-12
+    source:
+      title: "WRIC(A) 31056 of 2026"
+      file: "court-sources/allahabad/WRIC(A)_31056_2026.pdf"
+      locator: "PDF page 13, direction 10(iv)"
+    status: verified
+  - attribute: page.size
+    value: { name: Legal, width_in: 8.05, height_in: 14 }
+    class: mandatory
+    authority_rank: 1
+    effective_from: 2026-11-12
+    applies_to: { filing_mode: efiling }
+    source:
+      title: "Allahabad High Court e-Filing Instructions, quoted in WRIC(A) 31056 of 2026"
+      file: "court-sources/allahabad/WRIC(A)_31056_2026.pdf"
+      locator: "PDF page 11, clause 2.1"
+    status: verified
+  - attribute: page.size
+    value: { name: Legal, width_in: 8.05, height_in: 14 }
+    class: mandatory
+    authority_rank: 1
+    effective_from: 2026-11-12
+    applies_to: { filing_mode: physical }
+    source:
+      title: "Allahabad High Court Rules, 1952 and WRIC(A) 31056 of 2026"
+      file: "court-sources/allahabad/WRIC(A)_31056_2026.pdf"
+      locator: "PDF pages 11-13, direction 10(v); physical format measurements confirmed by advocate"
+    status: verified
+  - attribute: margins
+    value: { top_in: 1.5, bottom_in: 1, left_in: 1.75, right_in: 0.5 }
+    class: mandatory
+    authority_rank: 1
+    effective_from: 2026-11-12
+    applies_to: { filing_mode: physical }
+    source:
+      title: "Allahabad High Court Rules, 1952 and WRIC(A) 31056 of 2026"
+      file: "court-sources/allahabad/hcrulespartIchItoVIII.pdf"
+      locator: "Chapter IX Rule 6 (quarter margin); exact measurements advocate-confirmed for VakilSuite"
+    status: verified
+  - attribute: margins
+    value: { top_in: 1.5, bottom_in: 1, left_in: 1.75, right_in: 0.5 }
+    class: mandatory
+    authority_rank: 1
+    effective_from: 2026-11-12
+    applies_to: { filing_mode: efiling }
+    source:
+      title: "Allahabad High Court e-Filing Instructions, quoted in WRIC(A) 31056 of 2026"
+      file: "court-sources/allahabad/WRIC(A)_31056_2026.pdf"
+      locator: "PDF page 11, clause 2.1"
+    status: verified
+  - attribute: justification
+    value: full
+    class: mandatory
+    authority_rank: 1
+    effective_from: 2026-11-12
+    applies_to: { filing_mode: efiling }
+    source:
+      title: "Allahabad High Court e-Filing Instructions, quoted in WRIC(A) 31056 of 2026"
+      file: "court-sources/allahabad/WRIC(A)_31056_2026.pdf"
+      locator: "PDF page 11, clause 2.1"
+    status: verified
+  - attribute: margin.quarter_rule
+    value: { required: true, exact_inches: 1.75 }
+    class: mandatory
+    authority_rank: 1
+    effective_from: 1952-09-15
+    applies_to: { filing_mode: physical }
+    source:
+      title: "Allahabad High Court Rules, 1952; exact implementation confirmed by advocate"
+      file: "court-sources/allahabad/hcrulespartIchItoVIII.pdf"
+      locator: "PDF page 44, Chapter IX Rule 6; PDF page 48, Rule 11(4) for copies"
+    status: verified

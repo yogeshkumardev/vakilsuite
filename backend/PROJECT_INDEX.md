@@ -32,7 +32,7 @@ Exact API operations and gates belong to mounted routers and schemas.
 | Uploads and file versions | [documents/router.py](app/features/documents/router.py) | Service, repository, verification; `test_upload_idempotency.py`, `test_document_verification.py` |
 | Source text, OCR, typing, provenance | [documents/source_service.py](app/features/documents/source_service.py) | Source OCR/text, typing layout, extraction modules; `test_original_source_text.py`, `test_source_ocr_submission.py`, `test_source_page_review.py` |
 | Working documents and revisions | [revisions/](app/features/revisions/) | Editor sessions/concurrency; `test_working_document_revisions.py`, `test_editor_bootstrap_sessions.py` |
-| Summary preparation and review | [summaries/](app/features/summaries/) | Summary worker; `test_summary_execution.py`, `test_summary_review_editor.py` |
+| Summary map/reduce, preparation and review | [summaries/](app/features/summaries/) | Revision-bound document fact cards, durable per-run map-delivery outbox, synthesis worker and cited-source views; `test_summary_execution.py`, `test_summary_fact_cards.py`, `test_summary_review_editor.py` |
 | Draft generation and human review | [workflows/](app/features/workflows/) | S528/resume workers; `test_s528_generation.py`, `test_workflow_poc.py` |
 | DOCX/PDF exports | [exports/](app/features/exports/) | Renderer, LibreOffice, review gate, durable worker; `test_exports.py` |
 | OKF previews and context | [okf_exports/](app/features/okf_exports/) | Knowledge bundles; `test_okf_export_preview.py`, `test_okf_context_snapshots.py` |
@@ -40,13 +40,17 @@ Exact API operations and gates belong to mounted routers and schemas.
 | Multipart/realtime dictation | [dictation/](app/features/dictation/) | Speech adapters; `test_dictation.py`, `test_dictation_realtime.py` |
 | Durable jobs | [jobs/](app/features/jobs/) | Worker delivery; `test_jobs_contract.py`, `test_worker_loop_lifecycle.py` |
 | Offline anonymization | [draft_anonymization/](app/features/draft_anonymization/) | Explicit scripts/adapters; `test_draft_anonymization.py` |
+| Court-format rule resolution | [court_rules/](app/features/court_rules/) | Source-cited YAML in `../courts/<court>/`; `test_court_rules.py` |
+| Court draft blueprint selection | [blueprints/](app/features/blueprints/) | Declarative YAML in `../courts/<court>/blueprints/`; `test_blueprints.py` |
+| Court draft assembly, advocate profile and compliance | [drafts/](app/features/drafts/) | Summary-hash guard, approved-source filename annexure mapping, Allahabad physical bail blueprint, cited affidavit finding coverage, policy-gated Gemini prose job, deterministic renderer/validator, and linked versioned Word-editor handoff with DOCX/PDF export; `test_court_drafts.py`, `test_court_draft_affidavit.py`, `test_court_draft_rendering.py` |
 | Retrieval POC | [retrieval_poc/](app/features/retrieval_poc/) | `test_retrieval_poc.py`; POC presence does not certify production retrieval |
 
 ## Development and checks
 
 Dependencies: [pyproject.toml](pyproject.toml). Infrastructure: [docker-compose.yml](docker-compose.yml).
 The workspace [dev script](../scripts/dev.sh) starts migrations, worker/beat, API and web;
-inspect it before use. It is not a read-only setup check.
+inspect it before use. When PostgreSQL/Redis are managed separately, use
+`../scripts/dev-backend.sh` for the API plus Celery worker; it does not run Docker or migrations.
 
 Run from `backend/` as appropriate:
 

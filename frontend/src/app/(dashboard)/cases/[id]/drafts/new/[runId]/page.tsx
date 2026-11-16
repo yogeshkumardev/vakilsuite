@@ -1,7 +1,8 @@
 "use client";
 import { useParams } from "next/navigation";
-import { OkfExportWorkspace } from "@/features/okf-exports/OkfExportWorkspace";
+import { Bail483DraftWorkspace } from "@/features/drafts/Bail483DraftWorkspace";
+
 export default function DraftPreparationPage() {
     const { id, runId } = useParams<{ id: string; runId: string }>();
-    return <OkfExportWorkspace caseId={id} runId={runId} />;
+    return <Bail483DraftWorkspace caseId={id} summaryRunId={runId} />;
 }

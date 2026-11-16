@@ -11,7 +11,7 @@ from typing import Any, TypeVar
 import httpx
 from google import genai
 from google.genai import errors, types
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ConfigDict, ValidationError, create_model
 
 from app.core.config import settings
 from app.integrations.ai.contracts import (
@@ -404,17 +404,24 @@ def _summary_request(
 class GeminiAdapter:
     provider_name = ProviderName.gemini
 
-    def __init__(self, model: str | None = None, *, client: Any | None = None) -> None:
+    def __init__(
+        self,
+        model: str | None = None,
+        *,
+        client: Any | None = None,
+        timeout_seconds: int | None = None,
+    ) -> None:
         self.model = model or settings.GEMINI_MODEL
         allowed = frozenset(settings.GEMINI_ALLOWED_MODELS or [settings.GEMINI_MODEL])
         if not self.model or self.model not in allowed:
             raise ValueError(
                 f"Gemini model '{self.model}' is not in GEMINI_ALLOWED_MODELS"
             )
+        request_timeout_seconds = timeout_seconds or settings.AI_REQUEST_TIMEOUT_SECONDS
         self._client = client or genai.Client(
             api_key=settings.GEMINI_API_KEY,
             http_options=types.HttpOptions(
-                timeout=settings.AI_REQUEST_TIMEOUT_SECONDS * 1000,
+                timeout=request_timeout_seconds * 1000,
                 retry_options=types.HttpRetryOptions(attempts=1),
             ),
         )
@@ -853,5 +860,78 @@ class GeminiAdapter:
                 sections=payload.sections,
                 missing_facts=payload.missing_facts,
             )
+        except Exception as exc:
+            return self._map_exception(exc)
+
+    def generate_court_draft_prose(
+        self,
+        *,
+        summary: dict[str, Any],
+        slots: list[str],
+        max_output_tokens: int,
+        affidavit_findings: list[dict[str, Any]] | None = None,
+    ) -> tuple[dict[str, Any], int | None, int | None, str | None] | ProviderError:
+        """Generate only affidavit narrative paragraphs from one approved summary.
+
+        Court rules, document assembly, the application body, prayer, and all
+        surrounding boilerplate remain deterministic.  The LLM writes only the
+        affidavit narrative paragraphs (one per cited finding).  The dynamically-
+        created schema makes the provider return exactly the requested prose slots;
+        it never receives a way to choose sections or alter the court template.
+        """
+        if slots and len(set(slots)) != len(slots):
+            raise ValueError("Court draft generation requires unique prose slots")
+        if not slots and not affidavit_findings:
+            raise ValueError("Court draft generation requires prose slots or affidavit findings")
+        fields: dict[str, tuple[Any, Any]] = {slot: (str, ...) for slot in slots}
+        if affidavit_findings:
+            paragraph_schema = create_model(
+                "CitedAffidavitParagraph", __config__=ConfigDict(extra="forbid"),
+                finding_id=(str, ...), text=(str, ...),
+            )
+            fields["affidavit_paragraphs"] = (list[paragraph_schema], ...)
+        section_schema = create_model(
+            "CourtDraftProse",
+            __config__=ConfigDict(extra="forbid"),
+            **fields,
+        )
+        try:
+            payload, response = self._generate(
+                contents=(
+                    (("Requested slots: " + json.dumps(slots) + "\n") if slots else "")
+                    + "Verified summary:\n" + json.dumps(summary, ensure_ascii=False)
+                    + ("\nAffidavit findings, in required order:\n" + json.dumps(
+                        [{key: finding[key] for key in ("id", "section", "text", "status")}
+                         for finding in affidavit_findings], ensure_ascii=False
+                    ) if affidavit_findings else "")
+                ),
+                system_instruction=(
+                    "Write only the affidavit narrative paragraphs for an Allahabad High Court "
+                    "regular-bail application under Section 483 BNSS. "
+                    "All structural boilerplate, the application body, prayer, and cause title are "
+                    "deterministic — do not write them. "
+                    "Use only the verified summary supplied. "
+                    "Do not invent names, dates, facts, procedural history, law, citations, "
+                    "or authorities. If evidence is missing, write [● lawyer confirm karein ●]. "
+                    "For affidavit_paragraphs, write exactly one paragraph of formal legal prose "
+                    "for each supplied finding, in the same order, returning its exact finding_id. "
+                    "Each paragraph must be in formal legal language suitable for Allahabad High Court — "
+                    "no headings, no Markdown, no numbering prefix (the system adds the number). "
+                    "Retain allegation/dispute/record status; never turn an allegation into a proven fact. "
+                    "Do not invent deponent knowledge, prior bail history, criminal history, "
+                    "document dates, legal authorities, or a citation not present in the source."
+                ),
+                schema=section_schema,
+                max_output_tokens=max_output_tokens,
+            )
+            prose = {slot: str(getattr(payload, slot)).strip() for slot in slots}
+            if affidavit_findings:
+                prose["affidavit_paragraphs"] = [
+                    item.model_dump() for item in payload.affidavit_paragraphs
+                ]
+            if any(not text or len(text) > 20_000 for text in prose.values()):
+                raise ValueError("Provider returned invalid court-draft prose")
+            input_tokens, output_tokens = self._token_counts(response)
+            return prose, input_tokens, output_tokens, getattr(response, "response_id", None)
         except Exception as exc:
             return self._map_exception(exc)

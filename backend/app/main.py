@@ -43,6 +43,7 @@ from app.features.revisions.router import editor_sessions_router, router as work
 from app.features.summaries.router import router as summaries_router
 from app.features.okf_exports.router import router as okf_exports_router
 from app.features.legal_research.router import router as legal_research_router
+from app.features.drafts.router import profile_router as advocate_profile_router, router as court_drafts_router
 from fastapi.openapi.utils import get_openapi
 from app.core.api_responses import HealthResponse
 
@@ -123,6 +124,8 @@ app.include_router(editor_sessions_router, prefix=API_PREFIX)
 app.include_router(summaries_router, prefix=API_PREFIX)
 app.include_router(okf_exports_router, prefix=API_PREFIX)
 app.include_router(legal_research_router, prefix=API_PREFIX)
+app.include_router(court_drafts_router, prefix=API_PREFIX)
+app.include_router(advocate_profile_router, prefix=API_PREFIX)
 
 
 @app.get("/health", tags=["Health"], response_model=HealthResponse, operation_id="health_check")

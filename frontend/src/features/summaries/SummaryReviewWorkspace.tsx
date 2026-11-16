@@ -40,6 +40,8 @@ function ScopedReview({ caseId, runId }: { caseId: string; runId: string }) {
     const [saved, setSaved] = useState(false);
     const [recoveryReviewed, setRecoveryReviewed] = useState(false);
     const [showAuditTrail, setShowAuditTrail] = useState(false);
+    const [regeneratedId, setRegeneratedId] = useState<string | null>(null);
+    const regenerate = useMutation({mutationFn:()=>summariesApi.regenerateIncomplete(caseId,runId),onSuccess:result=>setRegeneratedId(result.id)});
 
     useEffect(() => {
         const warn = (event: BeforeUnloadEvent) => {
@@ -283,6 +285,14 @@ function ScopedReview({ caseId, runId }: { caseId: string; runId: string }) {
                     )}
                 </div>
             </header>
+
+            {unverified && data.result_payload && "reason" in data.result_payload && data.result_payload.reason === "incomplete_output" && (
+                <div className="flex flex-wrap items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    <p>The provider stopped before completing this summary. Your document fact cards are saved.</p>
+                    {regeneratedId ? <Link className="rounded border border-amber-400 bg-white px-3 py-2 font-semibold underline" href={`/cases/${caseId}/summary/${regeneratedId}`}>Open regenerated summary</Link> : <button className="rounded border border-amber-400 bg-white px-3 py-2 font-semibold disabled:opacity-50" disabled={regenerate.isPending} onClick={()=>regenerate.mutate()}>{regenerate.isPending?"Starting synthesis…":"Regenerate incomplete summary"}</button>}
+                    {regenerate.error&&<p role="alert">{regenerate.error.message}</p>}
+                </div>
+            )}
 
             {/* Incomplete / Recovery Notice Banner (only when needed) */}
             {data.editor_recovery_notice && (

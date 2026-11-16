@@ -20,6 +20,7 @@ _ALLOWED_METADATA: dict[ChamberAuditEventType, frozenset[str]] = {
     ChamberAuditEventType.case_access_revoked: frozenset(),
     ChamberAuditEventType.case_archived: frozenset(),
     ChamberAuditEventType.case_soft_deleted: frozenset(),
+    ChamberAuditEventType.draft_downloaded: frozenset({"format"}),
 }
 
 

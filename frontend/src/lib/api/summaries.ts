@@ -4,10 +4,25 @@ import { apiClient } from "./client";
 export type SummarySourceCandidate = components["schemas"]["SummarySourceCandidateResponse"];
 export type SummaryRun = components["schemas"]["SummaryRunResponse"];
 export type SummaryRunDetail = components["schemas"]["SummaryRunDetailResponse"];
+export type FactCardCoverage = components["schemas"]["FactCardCoverageResponse"];
+export type FactCardSource = components["schemas"]["SummarySourceView"];
 
 type ApiEnvelope<T> = { success: true; data: T };
 
 export const summariesApi = {
+    factCardCoverage: async (caseId: string): Promise<FactCardCoverage[]> =>
+        (await apiClient.get<ApiEnvelope<FactCardCoverage[]>>(`/cases/${caseId}/fact-card-coverage`)).data,
+    factCardSource: async (caseId: string, cardId: string, section: number, finding: number, citation: number): Promise<FactCardSource> =>
+        (await apiClient.get<ApiEnvelope<FactCardSource>>(`/cases/${caseId}/fact-cards/${cardId}/sources/${section}/${finding}/${citation}`)).data,
+    retryFactCard: async (caseId: string, runId: string, cardId: string, acknowledgeProviderOutcomeUnknown = false): Promise<void> => {
+        await apiClient.post(`/cases/${caseId}/summary-runs/${runId}/fact-cards/${cardId}/retry`, {
+            acknowledge_provider_outcome_unknown: acknowledgeProviderOutcomeUnknown,
+        });
+    },
+    resumeFactCardDeliveries: async (caseId: string, runId: string): Promise<{id:string;status:string}> =>
+        (await apiClient.post<ApiEnvelope<{id:string;status:string}>>(`/cases/${caseId}/summary-runs/${runId}/resume-fact-card-deliveries`)).data,
+    regenerateIncomplete: async (caseId: string, runId: string): Promise<{id:string;status:string}> =>
+        (await apiClient.post<ApiEnvelope<{id:string;status:string}>>(`/cases/${caseId}/summary-runs/${runId}/regenerate-incomplete`)).data,
     source: async (caseId:string,runId:string,findingId:string,index:number):Promise<components["schemas"]["SummarySourceView"]> => (await apiClient.get<ApiEnvelope<components["schemas"]["SummarySourceView"]>>(`/cases/${caseId}/summary-runs/${runId}/sources/${encodeURIComponent(findingId)}/${index}`)).data,
     listSourceCandidates: async (caseId: string): Promise<SummarySourceCandidate[]> => {
         const response = await apiClient.get<ApiEnvelope<SummarySourceCandidate[]>>(
